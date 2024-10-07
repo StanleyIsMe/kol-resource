@@ -64,6 +64,7 @@ CREATE TABLE "kol_tag" (
 CREATE TABLE "send_email_log" (
     "id" uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     "kol_id" uuid NOT NULL,
+    "kol_name" varchar(50) NOT NULL,
     "email" uuid NOT NULL,
     "admin_id" uuid NOT NULL,
     "admin_name" varchar(50) NOT NULL,

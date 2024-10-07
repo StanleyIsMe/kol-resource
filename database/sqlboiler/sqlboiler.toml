@@ -1,0 +1,9 @@
+output =  "internal/db/sqlboiler"
+pkgname = "model"
+wipe     = true
+add-enum-types = true
+always-wrap-errors = true
+
+[psql]
+sslmode = "disable"
+blacklist = ["schema_migrations"]
