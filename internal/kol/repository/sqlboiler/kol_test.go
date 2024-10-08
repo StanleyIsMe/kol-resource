@@ -8,9 +8,10 @@ import (
 	"fmt"
 	"io"
 	"kolresource/database"
+	"kolresource/internal/kol"
 	"kolresource/internal/kol/domain"
-	"kolresource/internal/kol/domain/kol"
-	"kolresource/internal/kol/entities"
+
+	"kolresource/internal/kol/domain/entities"
 	"kolresource/pkg/database/postgreinit"
 	"log"
 	"net/url"
@@ -260,12 +261,12 @@ func TestNewKolRepository(t *testing.T) {
 func TestCreateKol(t *testing.T) {
 	tests := []struct {
 		name    string
-		param   kol.CreateKolParams
+		param   domain.CreateKolParams
 		wantErr bool
 	}{
 		{
 			name: "happy path",
-			param: kol.CreateKolParams{
+			param: domain.CreateKolParams{
 				Name:           "Test KOL",
 				Email:          "test@example.com",
 				Description:    "Test description",
@@ -277,7 +278,7 @@ func TestCreateKol(t *testing.T) {
 		},
 		{
 			name: "dumplicate email error",
-			param: kol.CreateKolParams{
+			param: domain.CreateKolParams{
 				Name:           "Test KOL",
 				Email:          "test@example.com",
 				Description:    "Test description",
@@ -289,7 +290,7 @@ func TestCreateKol(t *testing.T) {
 		},
 		{
 			name: "very long name",
-			param: kol.CreateKolParams{
+			param: domain.CreateKolParams{
 				Name:           strings.Repeat("a", 256),
 				Email:          "test@example.com",
 				Description:    "Test description",
@@ -301,7 +302,7 @@ func TestCreateKol(t *testing.T) {
 		},
 		{
 			name: "invalid sex",
-			param: kol.CreateKolParams{
+			param: domain.CreateKolParams{
 				Name:           "Test KOL",
 				Email:          "test@example.com",
 				Description:    "Test description",
@@ -361,7 +362,7 @@ func TestGetKolByID(t *testing.T) {
 	repo := NewKolRepository(suitUpInstance.stdConn)
 	ctx := context.Background()
 
-	newKol, err := repo.CreateKol(ctx, kol.CreateKolParams{
+	newKol, err := repo.CreateKol(ctx, domain.CreateKolParams{
 		Name:           "stanley",
 		Email:          "stanley@gmail.com",
 		Description:    "description",
@@ -424,11 +425,11 @@ func TestUpdateKol(t *testing.T) {
 	repo := NewKolRepository(suitUpInstance.stdConn)
 
 	// Create a test KOL to update
-	initialKol, err := repo.CreateKol(ctx, kol.CreateKolParams{
+	initialKol, err := repo.CreateKol(ctx, domain.CreateKolParams{
 		Name:           "Initial Name",
 		Email:          "initial@example.com",
 		Description:    "Initial description",
-		Sex:            domain.SexMale,
+		Sex:            kol.SexMale,
 		Enable:         true,
 		UpdatedAdminID: uuid.New(),
 	})
@@ -438,18 +439,18 @@ func TestUpdateKol(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		param   kol.UpdateKolParams
+		param   domain.UpdateKolParams
 		wantKol *entities.Kol
 		wantErr bool
 	}{
 		{
 			name: "happy path",
-			param: kol.UpdateKolParams{
+			param: domain.UpdateKolParams{
 				ID:             initialKol.ID,
 				Name:           "Updated Name",
 				Email:          "updated@example.com",
 				Description:    "Updated description",
-				Sex:            domain.SexFemale,
+				Sex:            kol.SexFemale,
 				Enable:         false,
 				UpdatedAdminID: uuid.MustParse("6a9f3135-8415-4002-8011-f8c1d283964e"),
 			},
@@ -458,7 +459,7 @@ func TestUpdateKol(t *testing.T) {
 				Name:           "Updated Name",
 				Email:          "updated@example.com",
 				Description:    "Updated description",
-				Sex:            domain.SexFemale,
+				Sex:            kol.SexFemale,
 				Enable:         false,
 				UpdatedAdminID: uuid.MustParse("6a9f3135-8415-4002-8011-f8c1d283964e"),
 				CreatedAt:      initialKol.CreatedAt,
@@ -467,12 +468,12 @@ func TestUpdateKol(t *testing.T) {
 		},
 		{
 			name: "non-existent KOL",
-			param: kol.UpdateKolParams{
+			param: domain.UpdateKolParams{
 				ID:             uuid.New(),
 				Name:           "Non-existent",
 				Email:          "nonexistent@example.com",
 				Description:    "This KOL doesn't exist",
-				Sex:            domain.SexMale,
+				Sex:            kol.SexMale,
 				Enable:         true,
 				UpdatedAdminID: uuid.New(),
 			},

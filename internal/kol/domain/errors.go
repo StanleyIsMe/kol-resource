@@ -1,4 +1,4 @@
-package admin
+package domain
 
 import (
 	"errors"
@@ -39,6 +39,14 @@ func (e UpdateRecordError) Error() string {
 	return fmt.Sprintf("failed to update record in db: %s", e.Err)
 }
 
+type DeleteRecordError struct {
+	Err error
+}
+
+func (e DeleteRecordError) Error() string {
+	return fmt.Sprintf("failed to delete record in db: %s", e.Err)
+}
+
 type UUIDInvalidError struct {
 	Field string
 	UUID  string
@@ -46,4 +54,12 @@ type UUIDInvalidError struct {
 
 func (m UUIDInvalidError) Error() string {
 	return fmt.Sprintf("%s is %s not a valid uuid", m.Field, m.UUID)
+}
+
+type SexInvalidError struct {
+	Sex string
+}
+
+func (m SexInvalidError) Error() string {
+	return fmt.Sprintf("%s is not a valid sex type", m.Sex)
 }

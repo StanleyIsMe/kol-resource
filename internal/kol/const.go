@@ -1,4 +1,4 @@
-package domain
+package kol
 
 type Sex string
 

@@ -1,9 +1,9 @@
-package kol
+package domain
 
 import (
 	"context"
-	"kolresource/internal/kol/domain"
-	"kolresource/internal/kol/entities"
+	"kolresource/internal/kol"
+	"kolresource/internal/kol/domain/entities"
 
 	"github.com/google/uuid"
 )
@@ -32,7 +32,7 @@ type CreateKolParams struct {
 	Name           string
 	Email          string
 	Description    string
-	Sex            domain.Sex
+	Sex            kol.Sex
 	Enable         bool
 	UpdatedAdminID uuid.UUID
 }
@@ -42,7 +42,7 @@ type UpdateKolParams struct {
 	Name           string
 	Email          string
 	Description    string
-	Sex            domain.Sex
+	Sex            kol.Sex
 	Enable         bool
 	UpdatedAdminID uuid.UUID
 }
@@ -51,7 +51,7 @@ type ListKolWithTagsByFiltersParams struct {
 	Email    *string
 	Name     *string
 	Tag      *string
-	Sex      *domain.Sex
+	Sex      *kol.Sex
 	Page     int
 	PageSize int
 }

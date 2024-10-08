@@ -6,9 +6,9 @@ import (
 	"errors"
 	"fmt"
 	model "kolresource/internal/db/sqlboiler"
+	"kolresource/internal/kol"
 	"kolresource/internal/kol/domain"
-	"kolresource/internal/kol/domain/kol"
-	"kolresource/internal/kol/entities"
+	"kolresource/internal/kol/domain/entities"
 
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -28,19 +28,19 @@ func (repo *KolRepository) GetKolByID(ctx context.Context, id uuid.UUID) (*entit
 	kolModel, err := model.Kols(qm.Where("id = ?", id)).One(ctx, repo.db)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, kol.ErrDataNotFound
+			return nil, domain.ErrDataNotFound
 		}
 
-		return nil, kol.QueryRecordError{Err: err}
+		return nil, domain.QueryRecordError{Err: err}
 	}
 
 	return repo.newKolFromModel(kolModel)
 }
 
-func (repo *KolRepository) CreateKol(ctx context.Context, param kol.CreateKolParams) (*entities.Kol, error) {
+func (repo *KolRepository) CreateKol(ctx context.Context, param domain.CreateKolParams) (*entities.Kol, error) {
 	kolUUID, err := uuid.NewV7()
 	if err != nil {
-		return nil, kol.GenerateUUIDError{Err: err}
+		return nil, domain.GenerateUUIDError{Err: err}
 	}
 
 	kolModel := &model.Kol{
@@ -55,16 +55,16 @@ func (repo *KolRepository) CreateKol(ctx context.Context, param kol.CreateKolPar
 
 	err = kolModel.Insert(ctx, repo.db, boil.Infer())
 	if err != nil {
-		return nil, kol.InsertRecordError{Err: err}
+		return nil, domain.InsertRecordError{Err: err}
 	}
 
 	return repo.newKolFromModel(kolModel)
 }
 
-func (repo *KolRepository) UpdateKol(ctx context.Context, param kol.UpdateKolParams) (*entities.Kol, error) {
+func (repo *KolRepository) UpdateKol(ctx context.Context, param domain.UpdateKolParams) (*entities.Kol, error) {
 	kolModel, err := model.FindKol(ctx, repo.db, param.ID.String())
 	if err != nil {
-		return nil, kol.QueryRecordError{Err: err}
+		return nil, domain.QueryRecordError{Err: err}
 	}
 
 	kolModel.Name = param.Name
@@ -76,7 +76,7 @@ func (repo *KolRepository) UpdateKol(ctx context.Context, param kol.UpdateKolPar
 
 	_, err = kolModel.Update(ctx, repo.db, boil.Infer())
 	if err != nil {
-		return nil, kol.UpdateRecordError{Err: err}
+		return nil, domain.UpdateRecordError{Err: err}
 	}
 
 	return repo.newKolFromModel(kolModel)
@@ -85,16 +85,16 @@ func (repo *KolRepository) UpdateKol(ctx context.Context, param kol.UpdateKolPar
 func (repo *KolRepository) DeleteKolByID(ctx context.Context, id uuid.UUID) error {
 	kolModel, err := model.FindKol(ctx, repo.db, id.String())
 	if err != nil {
-		return kol.QueryRecordError{Err: err}
+		return domain.QueryRecordError{Err: err}
 	}
 
 	rows, err := kolModel.Delete(ctx, repo.db)
 	if err != nil {
-		return kol.DeleteRecordError{Err: err}
+		return domain.DeleteRecordError{Err: err}
 	}
 
 	if rows == 0 {
-		return kol.ErrDataNotFound
+		return domain.ErrDataNotFound
 	}
 
 	return nil
@@ -106,7 +106,7 @@ type KolWithTags struct {
 	TagID     string `boil:"tag_id"`
 }
 
-func (repo *KolRepository) GetKolWithTagsByID(ctx context.Context, id uuid.UUID) (*kol.Kol, error) {
+func (repo *KolRepository) GetKolWithTagsByID(ctx context.Context, id uuid.UUID) (*domain.Kol, error) {
 	var kolWithTags []KolWithTags
 	err := model.NewQuery(
 		qm.Select("kol.*", "tag.name as tag", "tag.id as tag_id"),
@@ -116,7 +116,7 @@ func (repo *KolRepository) GetKolWithTagsByID(ctx context.Context, id uuid.UUID)
 		qm.Where("kol.id = ?", id.String()),
 	).Bind(ctx, repo.db, &kolWithTags)
 	if err != nil {
-		return nil, kol.QueryRecordError{Err: err}
+		return nil, domain.QueryRecordError{Err: err}
 	}
 
 	if len(kolWithTags) == 0 {
@@ -128,12 +128,12 @@ func (repo *KolRepository) GetKolWithTagsByID(ctx context.Context, id uuid.UUID)
 		return nil, fmt.Errorf("failed to create kol from model: %w", err)
 	}
 
-	kolAggregate := kol.NewKol(kolEntity)
+	kolAggregate := domain.NewKol(kolEntity)
 
 	for _, tag := range kolWithTags {
 		tagUUID, err := uuid.Parse(tag.TagID)
 		if err != nil {
-			return nil, kol.UUIDInvalidError{Field: "tag_id", UUID: tag.TagID}
+			return nil, domain.UUIDInvalidError{Field: "tag_id", UUID: tag.TagID}
 		}
 
 		kolAggregate.AppendTag(&entities.Tag{
@@ -145,7 +145,7 @@ func (repo *KolRepository) GetKolWithTagsByID(ctx context.Context, id uuid.UUID)
 	return kolAggregate, nil
 }
 
-func (repo *KolRepository) ListKolWithTagsByFilters(ctx context.Context, param kol.ListKolWithTagsByFiltersParams) ([]*kol.Kol, int, error) {
+func (repo *KolRepository) ListKolWithTagsByFilters(ctx context.Context, param domain.ListKolWithTagsByFiltersParams) ([]*domain.Kol, int, error) {
 	var kolWithTags []KolWithTags
 
 	query := []qm.QueryMod{
@@ -175,7 +175,7 @@ func (repo *KolRepository) ListKolWithTagsByFilters(ctx context.Context, param k
 
 	err := model.NewQuery(query...).Bind(ctx, repo.db, &kolWithTags)
 	if err != nil {
-		return nil, 0, kol.QueryRecordError{Err: err}
+		return nil, 0, domain.QueryRecordError{Err: err}
 	}
 
 	count, err := repo.countKolWithTagsByFilters(ctx, param)
@@ -195,7 +195,7 @@ type Count struct {
 	Count int `boil:"count"`
 }
 
-func (repo *KolRepository) countKolWithTagsByFilters(ctx context.Context, param kol.ListKolWithTagsByFiltersParams) (int, error) {
+func (repo *KolRepository) countKolWithTagsByFilters(ctx context.Context, param domain.ListKolWithTagsByFiltersParams) (int, error) {
 	var count Count
 
 	query := []qm.QueryMod{
@@ -224,16 +224,16 @@ func (repo *KolRepository) countKolWithTagsByFilters(ctx context.Context, param 
 
 	err := model.NewQuery(query...).Bind(ctx, repo.db, &count)
 	if err != nil {
-		return 0, kol.QueryRecordError{Err: err}
+		return 0, domain.QueryRecordError{Err: err}
 	}
 
 	return count.Count, nil
 }
 
-func (repo *KolRepository) CreateTag(ctx context.Context, param kol.CreateTagParams) (*entities.Tag, error) {
+func (repo *KolRepository) CreateTag(ctx context.Context, param domain.CreateTagParams) (*entities.Tag, error) {
 	tagUUID, err := uuid.NewV7()
 	if err != nil {
-		return nil, kol.GenerateUUIDError{Err: err}
+		return nil, domain.GenerateUUIDError{Err: err}
 	}
 
 	tagModel := &model.Tag{
@@ -244,7 +244,7 @@ func (repo *KolRepository) CreateTag(ctx context.Context, param kol.CreateTagPar
 
 	err = tagModel.Insert(ctx, repo.db, boil.Infer())
 	if err != nil {
-		return nil, kol.InsertRecordError{Err: err}
+		return nil, domain.InsertRecordError{Err: err}
 	}
 
 	return repo.newTagFromModel(tagModel)
@@ -253,7 +253,7 @@ func (repo *KolRepository) CreateTag(ctx context.Context, param kol.CreateTagPar
 func (repo *KolRepository) GetTagByID(ctx context.Context, id uuid.UUID) (*entities.Tag, error) {
 	tagModel, err := model.Tags(qm.Where("id = ?", id)).One(ctx, repo.db)
 	if err != nil {
-		return nil, kol.QueryRecordError{Err: err}
+		return nil, domain.QueryRecordError{Err: err}
 	}
 
 	return repo.newTagFromModel(tagModel)
@@ -262,25 +262,25 @@ func (repo *KolRepository) GetTagByID(ctx context.Context, id uuid.UUID) (*entit
 func (repo *KolRepository) DeleteTagByID(ctx context.Context, id uuid.UUID) error {
 	tagModel, err := model.FindTag(ctx, repo.db, id.String())
 	if err != nil {
-		return kol.QueryRecordError{Err: err}
+		return domain.QueryRecordError{Err: err}
 	}
 
 	rows, err := tagModel.Delete(ctx, repo.db)
 	if err != nil {
-		return kol.DeleteRecordError{Err: err}
+		return domain.DeleteRecordError{Err: err}
 	}
 
 	if rows == 0 {
-		return kol.ErrDataNotFound
+		return domain.ErrDataNotFound
 	}
 
 	return nil
 }
 
-func (repo *KolRepository) CreateProduct(ctx context.Context, param kol.CreateProductParams) (*entities.Product, error) {
+func (repo *KolRepository) CreateProduct(ctx context.Context, param domain.CreateProductParams) (*entities.Product, error) {
 	productUUID, err := uuid.NewV7()
 	if err != nil {
-		return nil, kol.GenerateUUIDError{Err: err}
+		return nil, domain.GenerateUUIDError{Err: err}
 	}
 
 	productModel := &model.Product{
@@ -292,7 +292,7 @@ func (repo *KolRepository) CreateProduct(ctx context.Context, param kol.CreatePr
 
 	err = productModel.Insert(ctx, repo.db, boil.Infer())
 	if err != nil {
-		return nil, kol.InsertRecordError{Err: err}
+		return nil, domain.InsertRecordError{Err: err}
 	}
 
 	return repo.newProductFromModel(productModel)
@@ -302,10 +302,10 @@ func (repo *KolRepository) GetProductByID(ctx context.Context, id uuid.UUID) (*e
 	productModel, err := model.Products(qm.Where("id = ?", id)).One(ctx, repo.db)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, kol.ErrDataNotFound
+			return nil, domain.ErrDataNotFound
 		}
 
-		return nil, kol.QueryRecordError{Err: err}
+		return nil, domain.QueryRecordError{Err: err}
 	}
 
 	return repo.newProductFromModel(productModel)
@@ -314,16 +314,16 @@ func (repo *KolRepository) GetProductByID(ctx context.Context, id uuid.UUID) (*e
 func (repo *KolRepository) DeleteProductByID(ctx context.Context, id uuid.UUID) error {
 	productModel, err := model.FindProduct(ctx, repo.db, id.String())
 	if err != nil {
-		return kol.QueryRecordError{Err: err}
+		return domain.QueryRecordError{Err: err}
 	}
 
 	rows, err := productModel.Delete(ctx, repo.db)
 	if err != nil {
-		return kol.DeleteRecordError{Err: err}
+		return domain.DeleteRecordError{Err: err}
 	}
 
 	if rows == 0 {
-		return kol.ErrDataNotFound
+		return domain.ErrDataNotFound
 	}
 
 	return nil
@@ -332,7 +332,7 @@ func (repo *KolRepository) DeleteProductByID(ctx context.Context, id uuid.UUID) 
 func (repo *KolRepository) CreateSendEmailLog(ctx context.Context, sendEmailLog *entities.SendEmailLog) (*entities.SendEmailLog, error) {
 	sendEmailLogUUID, err := uuid.NewV7()
 	if err != nil {
-		return nil, kol.GenerateUUIDError{Err: err}
+		return nil, domain.GenerateUUIDError{Err: err}
 	}
 
 	sendEmailLogModel := &model.SendEmailLog{
@@ -346,13 +346,13 @@ func (repo *KolRepository) CreateSendEmailLog(ctx context.Context, sendEmailLog 
 	}
 
 	if err := sendEmailLogModel.Insert(ctx, repo.db, boil.Infer()); err != nil {
-		return nil, kol.InsertRecordError{Err: err}
+		return nil, domain.InsertRecordError{Err: err}
 	}
 
 	return sendEmailLog, nil
 }
 
-func (repo *KolRepository) ListSendEmailLogsByFilter(ctx context.Context, param kol.ListSendEmailLogsByFilterParams) ([]*entities.SendEmailLog, int, error) {
+func (repo *KolRepository) ListSendEmailLogsByFilter(ctx context.Context, param domain.ListSendEmailLogsByFilterParams) ([]*entities.SendEmailLog, int, error) {
 	count, err := repo.countSendEmailLogsByFilter(ctx, param)
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to count send email logs by filter: %w", err)
@@ -386,7 +386,7 @@ func (repo *KolRepository) ListSendEmailLogsByFilter(ctx context.Context, param 
 
 	modelLogs, err := model.SendEmailLogs(query...).All(ctx, repo.db)
 	if err != nil {
-		return nil, 0, kol.QueryRecordError{Err: err}
+		return nil, 0, domain.QueryRecordError{Err: err}
 	}
 
 	logs := make([]*entities.SendEmailLog, len(modelLogs))
@@ -395,22 +395,22 @@ func (repo *KolRepository) ListSendEmailLogsByFilter(ctx context.Context, param 
 
 		sendEmailLogUUID, err := uuid.Parse(modelLog.ID)
 		if err != nil {
-			return nil, 0, kol.UUIDInvalidError{Field: "id", UUID: modelLog.ID}
+			return nil, 0, domain.UUIDInvalidError{Field: "id", UUID: modelLog.ID}
 		}
 
 		kolID, err := uuid.Parse(modelLog.KolID)
 		if err != nil {
-			return nil, 0, kol.UUIDInvalidError{Field: "kol_id", UUID: modelLog.KolID}
+			return nil, 0, domain.UUIDInvalidError{Field: "kol_id", UUID: modelLog.KolID}
 		}
 
 		adminID, err := uuid.Parse(modelLog.AdminID)
 		if err != nil {
-			return nil, 0, kol.UUIDInvalidError{Field: "admin_id", UUID: modelLog.AdminID}
+			return nil, 0, domain.UUIDInvalidError{Field: "admin_id", UUID: modelLog.AdminID}
 		}
 
 		productID, err := uuid.Parse(modelLog.ProductID)
 		if err != nil {
-			return nil, 0, kol.UUIDInvalidError{Field: "product_id", UUID: modelLog.ProductID}
+			return nil, 0, domain.UUIDInvalidError{Field: "product_id", UUID: modelLog.ProductID}
 		}
 
 		logs[index] = &entities.SendEmailLog{
@@ -427,7 +427,7 @@ func (repo *KolRepository) ListSendEmailLogsByFilter(ctx context.Context, param 
 	return logs, count, nil
 }
 
-func (repo *KolRepository) countSendEmailLogsByFilter(ctx context.Context, param kol.ListSendEmailLogsByFilterParams) (int, error) {
+func (repo *KolRepository) countSendEmailLogsByFilter(ctx context.Context, param domain.ListSendEmailLogsByFilterParams) (int, error) {
 	var count Count
 
 	query := []qm.QueryMod{
@@ -453,7 +453,7 @@ func (repo *KolRepository) countSendEmailLogsByFilter(ctx context.Context, param
 
 	err := model.NewQuery(query...).Bind(ctx, repo.db, &count)
 	if err != nil {
-		return 0, kol.QueryRecordError{Err: err}
+		return 0, domain.QueryRecordError{Err: err}
 	}
 
 	return count.Count, nil
@@ -462,17 +462,17 @@ func (repo *KolRepository) countSendEmailLogsByFilter(ctx context.Context, param
 func (repo *KolRepository) newKolFromModel(kolModel *model.Kol) (*entities.Kol, error) {
 	kolUUID, err := uuid.Parse(kolModel.ID)
 	if err != nil {
-		return nil, kol.UUIDInvalidError{Field: "id", UUID: kolModel.ID}
+		return nil, domain.UUIDInvalidError{Field: "id", UUID: kolModel.ID}
 	}
 
-	sex := domain.Sex(kolModel.Sex)
+	sex := kol.Sex(kolModel.Sex)
 	if !sex.IsValid() {
-		return nil, kol.SexInvalidError{Sex: string(kolModel.Sex)}
+		return nil, domain.SexInvalidError{Sex: string(kolModel.Sex)}
 	}
 
 	updateAdminUUID, err := uuid.Parse(kolModel.UpdatedAdminID)
 	if err != nil {
-		return nil, kol.UUIDInvalidError{Field: "update_admin_id", UUID: kolModel.UpdatedAdminID}
+		return nil, domain.UUIDInvalidError{Field: "update_admin_id", UUID: kolModel.UpdatedAdminID}
 	}
 
 	return &entities.Kol{
@@ -489,7 +489,7 @@ func (repo *KolRepository) newKolFromModel(kolModel *model.Kol) (*entities.Kol, 
 func (repo *KolRepository) newTagFromModel(tagModel *model.Tag) (*entities.Tag, error) {
 	tagUUID, err := uuid.Parse(tagModel.ID)
 	if err != nil {
-		return nil, kol.UUIDInvalidError{Field: "id", UUID: tagModel.ID}
+		return nil, domain.UUIDInvalidError{Field: "id", UUID: tagModel.ID}
 	}
 
 	return &entities.Tag{
@@ -501,7 +501,7 @@ func (repo *KolRepository) newTagFromModel(tagModel *model.Tag) (*entities.Tag, 
 func (repo *KolRepository) newProductFromModel(productModel *model.Product) (*entities.Product, error) {
 	productUUID, err := uuid.Parse(productModel.ID)
 	if err != nil {
-		return nil, kol.UUIDInvalidError{Field: "id", UUID: productModel.ID}
+		return nil, domain.UUIDInvalidError{Field: "id", UUID: productModel.ID}
 	}
 
 	return &entities.Product{
@@ -511,9 +511,9 @@ func (repo *KolRepository) newProductFromModel(productModel *model.Product) (*en
 	}, nil
 }
 
-func (repo *KolRepository) newKolWithTagsFromModel(kolWithTags []KolWithTags) ([]*kol.Kol, error) {
-	kolMap := make(map[string]*kol.Kol)
-	kols := make([]*kol.Kol, 0)
+func (repo *KolRepository) newKolWithTagsFromModel(kolWithTags []KolWithTags) ([]*domain.Kol, error) {
+	kolMap := make(map[string]*domain.Kol)
+	kols := make([]*domain.Kol, 0)
 
 	for _, kolWithTag := range kolWithTags {
 		if _, ok := kolMap[kolWithTag.ID]; !ok {
@@ -522,13 +522,13 @@ func (repo *KolRepository) newKolWithTagsFromModel(kolWithTags []KolWithTags) ([
 				return nil, err
 			}
 
-			kolMap[kolWithTag.ID] = kol.NewKol(kolEntity)
+			kolMap[kolWithTag.ID] = domain.NewKol(kolEntity)
 			kols = append(kols, kolMap[kolWithTag.ID])
 		}
 
 		tagUUID, err := uuid.Parse(kolWithTag.TagID)
 		if err != nil {
-			return nil, kol.UUIDInvalidError{Field: "tag_id", UUID: kolWithTag.TagID}
+			return nil, domain.UUIDInvalidError{Field: "tag_id", UUID: kolWithTag.TagID}
 		}
 
 		kolMap[kolWithTag.ID].AppendTag(&entities.Tag{

@@ -1,8 +1,8 @@
-package admin
+package domain
 
 import (
 	"context"
-	"kolresource/internal/kol/entities"
+	"kolresource/internal/admin/domain/entities"
 )
 
 type Repository interface {

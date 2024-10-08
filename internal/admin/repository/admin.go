@@ -4,9 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"kolresource/internal/admin/domain"
+	"kolresource/internal/admin/domain/entities"
 	model "kolresource/internal/db/sqlboiler"
-	"kolresource/internal/kol/domain/admin"
-	"kolresource/internal/kol/entities"
 
 	"github.com/google/uuid"
 	"github.com/volatiletech/sqlboiler/v4/boil"
@@ -21,14 +21,14 @@ func NewAdminRepository(db *sql.DB) *AdminRepository {
 	return &AdminRepository{db: db}
 }
 
-func (r *AdminRepository) GetAdminByUserName(ctx context.Context, userName string) (*entities.Admin, error) {
-	adminModel, err := model.Admins(qm.Where("user_name = ?", userName)).One(ctx, r.db)
+func (r *AdminRepository) GetAdminByUserName(ctx context.Context, username string) (*entities.Admin, error) {
+	adminModel, err := model.Admins(qm.Where("username = ?", username)).One(ctx, r.db)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, admin.ErrDataNotFound
+			return nil, domain.ErrDataNotFound
 		}
 
-		return nil, admin.QueryRecordError{Err: err}
+		return nil, domain.QueryRecordError{Err: err}
 	}
 
 	return r.newAdminFromModel(adminModel)
@@ -37,7 +37,7 @@ func (r *AdminRepository) GetAdminByUserName(ctx context.Context, userName strin
 func (r *AdminRepository) CreateAdmin(ctx context.Context, adminEntity *entities.Admin) (*entities.Admin, error) {
 	adminUUID, err := uuid.NewV7()
 	if err != nil {
-		return nil, admin.GenerateUUIDError{Err: err}
+		return nil, domain.GenerateUUIDError{Err: err}
 	}
 
 	adminModel := &model.Admin{
@@ -48,7 +48,7 @@ func (r *AdminRepository) CreateAdmin(ctx context.Context, adminEntity *entities
 
 	err = adminModel.Insert(ctx, r.db, boil.Infer())
 	if err != nil {
-		return nil, admin.InsertRecordError{Err: err}
+		return nil, domain.InsertRecordError{Err: err}
 	}
 
 	return r.newAdminFromModel(adminModel)
@@ -57,7 +57,7 @@ func (r *AdminRepository) CreateAdmin(ctx context.Context, adminEntity *entities
 func (r *AdminRepository) newAdminFromModel(adminModel *model.Admin) (*entities.Admin, error) {
 	adminUUID, err := uuid.Parse(adminModel.ID)
 	if err != nil {
-		return nil, admin.GenerateUUIDError{Err: err}
+		return nil, domain.GenerateUUIDError{Err: err}
 	}
 
 	return &entities.Admin{

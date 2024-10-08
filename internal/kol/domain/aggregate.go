@@ -1,7 +1,7 @@
-package kol
+package domain
 
 import (
-	"kolresource/internal/kol/entities"
+	"kolresource/internal/kol/domain/entities"
 )
 
 type Kol struct {
