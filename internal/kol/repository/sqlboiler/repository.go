@@ -25,7 +25,20 @@ func NewKolRepository(db *sql.DB) *KolRepository {
 }
 
 func (repo *KolRepository) GetKolByID(ctx context.Context, id uuid.UUID) (*entities.Kol, error) {
-	kolModel, err := model.Kols(qm.Where("id = ?", id)).One(ctx, repo.db)
+	kolModel, err := model.Kols(qm.Where("id = ?", id.String())).One(ctx, repo.db)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, domain.ErrDataNotFound
+		}
+
+		return nil, domain.QueryRecordError{Err: err}
+	}
+
+	return repo.newKolFromModel(kolModel)
+}
+
+func (repo *KolRepository) GetKolByEmail(ctx context.Context, email string) (*entities.Kol, error) {
+	kolModel, err := model.Kols(qm.Where("email = ?", email)).One(ctx, repo.db)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, domain.ErrDataNotFound
@@ -53,17 +66,49 @@ func (repo *KolRepository) CreateKol(ctx context.Context, param domain.CreateKol
 		UpdatedAdminID: param.UpdatedAdminID.String(),
 	}
 
-	err = kolModel.Insert(ctx, repo.db, boil.Infer())
+	tx, err := repo.db.BeginTx(ctx, nil)
 	if err != nil {
+		return nil, fmt.Errorf("failed to begin transaction: %w", err)
+	}
+
+	var txErr error
+
+	defer func() {
+		if txErr != nil {
+			tx.Rollback()
+		}
+	}()
+
+	if txErr = kolModel.Insert(ctx, tx, boil.Infer()); txErr != nil {
 		return nil, domain.InsertRecordError{Err: err}
+	}
+
+	for _, tagID := range param.Tags {
+		kolTagModel := &model.KolTag{
+			KolID:          kolModel.ID,
+			TagID:          tagID.String(),
+			UpdatedAdminID: param.UpdatedAdminID.String(),
+		}
+
+		if txErr = kolTagModel.Insert(ctx, tx, boil.Infer()); txErr != nil {
+			return nil, domain.InsertRecordError{Err: err}
+		}
+	}
+
+	if txErr = tx.Commit(); txErr != nil {
+		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
 	return repo.newKolFromModel(kolModel)
 }
 
 func (repo *KolRepository) UpdateKol(ctx context.Context, param domain.UpdateKolParams) (*entities.Kol, error) {
-	kolModel, err := model.FindKol(ctx, repo.db, param.ID.String())
+	kolModel, err := model.Kols(qm.Where("id = ?", param.ID.String())).One(ctx, repo.db)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, domain.ErrDataNotFound
+		}
+
 		return nil, domain.QueryRecordError{Err: err}
 	}
 
@@ -74,27 +119,89 @@ func (repo *KolRepository) UpdateKol(ctx context.Context, param domain.UpdateKol
 	kolModel.Enable = param.Enable
 	kolModel.UpdatedAdminID = param.UpdatedAdminID.String()
 
-	_, err = kolModel.Update(ctx, repo.db, boil.Infer())
+	tx, err := repo.db.BeginTx(ctx, nil)
 	if err != nil {
+		return nil, fmt.Errorf("failed to begin transaction: %w", err)
+	}
+
+	var txErr error
+
+	defer func() {
+		if txErr != nil {
+			tx.Rollback()
+		}
+	}()
+
+	_, txErr = kolModel.Update(ctx, tx, boil.Infer())
+	if txErr != nil {
 		return nil, domain.UpdateRecordError{Err: err}
+	}
+
+	if len(param.Tags) > 0 {
+		_, txErr = model.KolTags(qm.Where("kol_id = ?", kolModel.ID)).DeleteAll(ctx, tx)
+		if txErr != nil {
+			return nil, domain.DeleteRecordError{Err: err}
+		}
+	}
+
+	for _, tagID := range param.Tags {
+		kolTagModel := &model.KolTag{
+			KolID:          kolModel.ID,
+			TagID:          tagID.String(),
+			UpdatedAdminID: param.UpdatedAdminID.String(),
+		}
+
+		txErr = kolTagModel.Insert(ctx, tx, boil.Infer())
+		if txErr != nil {
+			return nil, domain.InsertRecordError{Err: err}
+		}
+	}
+
+	if txErr = tx.Commit(); txErr != nil {
+		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
 	return repo.newKolFromModel(kolModel)
 }
 
 func (repo *KolRepository) DeleteKolByID(ctx context.Context, id uuid.UUID) error {
-	kolModel, err := model.FindKol(ctx, repo.db, id.String())
+	kolModel, err := model.Kols(qm.Where("id = ?", id.String())).One(ctx, repo.db)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return domain.ErrDataNotFound
+		}
+
 		return domain.QueryRecordError{Err: err}
 	}
 
-	rows, err := kolModel.Delete(ctx, repo.db)
+	tx, err := repo.db.BeginTx(ctx, nil)
 	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+
+	var txErr error
+
+	defer func() {
+		if txErr != nil {
+			tx.Rollback()
+		}
+	}()
+
+	rows, txErr := kolModel.Delete(ctx, tx)
+	if txErr != nil {
 		return domain.DeleteRecordError{Err: err}
 	}
 
 	if rows == 0 {
 		return domain.ErrDataNotFound
+	}
+
+	if _, txErr = model.KolTags(qm.Where("kol_id = ?", kolModel.ID)).DeleteAll(ctx, tx); txErr != nil {
+		return domain.DeleteRecordError{Err: err}
+	}
+
+	if txErr = tx.Commit(); txErr != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
 	return nil
@@ -253,6 +360,23 @@ func (repo *KolRepository) CreateTag(ctx context.Context, param domain.CreateTag
 func (repo *KolRepository) GetTagByID(ctx context.Context, id uuid.UUID) (*entities.Tag, error) {
 	tagModel, err := model.Tags(qm.Where("id = ?", id)).One(ctx, repo.db)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, domain.ErrDataNotFound
+		}
+
+		return nil, domain.QueryRecordError{Err: err}
+	}
+
+	return repo.newTagFromModel(tagModel)
+}
+
+func (repo *KolRepository) GetTagByName(ctx context.Context, name string) (*entities.Tag, error) {
+	tagModel, err := model.Tags(qm.Where("name = ?", name)).One(ctx, repo.db)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, domain.ErrDataNotFound
+		}
+
 		return nil, domain.QueryRecordError{Err: err}
 	}
 
@@ -298,8 +422,38 @@ func (repo *KolRepository) CreateProduct(ctx context.Context, param domain.Creat
 	return repo.newProductFromModel(productModel)
 }
 
+func (repo *KolRepository) ListProductsByName(ctx context.Context, name string) ([]*entities.Product, error) {
+	productModels, err := model.Products(qm.Where("name LIKE %?%", name)).All(ctx, repo.db)
+	if err != nil {
+		return nil, domain.QueryRecordError{Err: err}
+	}
+
+	products := make([]*entities.Product, len(productModels))
+	for index, productModel := range productModels {
+		products[index], err = repo.newProductFromModel(productModel)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create product from model: %w", err)
+		}
+	}
+
+	return products, nil
+}
+
 func (repo *KolRepository) GetProductByID(ctx context.Context, id uuid.UUID) (*entities.Product, error) {
 	productModel, err := model.Products(qm.Where("id = ?", id)).One(ctx, repo.db)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, domain.ErrDataNotFound
+		}
+
+		return nil, domain.QueryRecordError{Err: err}
+	}
+
+	return repo.newProductFromModel(productModel)
+}
+
+func (repo *KolRepository) GetProductByName(ctx context.Context, name string) (*entities.Product, error) {
+	productModel, err := model.Products(qm.Where("name = ?", name)).One(ctx, repo.db)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, domain.ErrDataNotFound

@@ -2,12 +2,17 @@ package api
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
-	apiCfg "kol/internal/api/config"
-	"kol/internal/api/server"
-	"kol/pkg/config"
-	"kol/pkg/shutdown"
+	"kolresource/internal/admin/delivery/http"
+	adminRepo "kolresource/internal/admin/repository"
+	adminUseCase "kolresource/internal/admin/usecase"
+	apiCfg "kolresource/internal/api/config"
+	"kolresource/internal/api/repository"
+	"kolresource/internal/api/server"
+	"kolresource/pkg/config"
+	"kolresource/pkg/shutdown"
 
 	"github.com/rs/zerolog"
 )
@@ -33,7 +38,16 @@ func (a *API) Start(ctx context.Context) error {
 	apiS := server.NewServer(a.cfg, a.logger)
 	a.server = apiS
 
-	a.registerHTTPSvc(ctx)
+	pgStdConn, err := repository.NewPGStdConn(ctx, &a.cfg.CustomConfig.DB, a.logger)
+	if err != nil {
+		return fmt.Errorf("failed to initialize PGStdConn: %w", err)
+	}
+
+	a.shutdownHandler.Add("pgStdConn", func(ctx context.Context) error {
+		return pgStdConn.Close()
+	})
+
+	a.registerHTTPSvc(ctx, pgStdConn)
 
 	if err := apiS.Start(ctx); err != nil {
 		return fmt.Errorf("server start failed: %w", err)
@@ -44,8 +58,13 @@ func (a *API) Start(ctx context.Context) error {
 	return nil
 }
 
-func (a *API) registerHTTPSvc(_ context.Context) {
+func (a *API) registerHTTPSvc(_ context.Context, dbStdConn *sql.DB) {
 	a.server.SetupHTTPServer()
+	httpRouter := a.server.HTTPRouter()
 
-	//
+	adminRepository := adminRepo.NewAdminRepository(dbStdConn)
+
+	adminUseCase := adminUseCase.NewAdminUseCaseImpl(adminRepository)
+
+	http.RegisterAdminRoutes(httpRouter, adminUseCase)
 }

@@ -2,10 +2,11 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
-	"kol/internal/api/config"
-	"kol/pkg/database/postgreinit"
+	"kolresource/internal/api/config"
+	"kolresource/pkg/database/postgreinit"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rs/zerolog"
@@ -36,4 +37,31 @@ func NewPGPool(ctx context.Context, cfg *config.Database, logger *zerolog.Logger
 	}
 
 	return pool, nil
+}
+
+// NewPGStdConn to return a standard connection by database config.
+func NewPGStdConn(ctx context.Context, cfg *config.Database, logger *zerolog.Logger) (*sql.DB, error) {
+	pgi, err := postgreinit.New(
+		&postgreinit.Config{
+			Host:         cfg.Host,
+			Port:         cfg.Port,
+			User:         cfg.User,
+			Password:     cfg.Password,
+			Database:     cfg.Database,
+			MaxConns:     cfg.MaxConns,
+			MaxIdleConns: cfg.MaxIdleConns,
+			MaxLifeTime:  cfg.MaxLifeTime,
+		},
+		postgreinit.WithLogger(logger, "request-id"),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize PGInit: %w", err)
+	}
+
+	stdConn, err := pgi.StdConn(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initiate standard connection: %w", err)
+	}
+
+	return stdConn, nil
 }

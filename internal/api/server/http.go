@@ -27,6 +27,10 @@ func (s *Server) SetupHTTPServer() {
 	}
 }
 
+func (s *Server) HTTPRouter() *gin.Engine {
+	return s.httpRouter
+}
+
 func (s *Server) startHTTPServer() {
 	// Start http server
 	go func() {
@@ -34,5 +38,4 @@ func (s *Server) startHTTPServer() {
 			s.logger.Error().Err(err).Msg("http server failed to listen and serve")
 		}
 	}()
-
 }

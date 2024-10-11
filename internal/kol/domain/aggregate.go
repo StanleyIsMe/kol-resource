@@ -21,6 +21,14 @@ func (k *Kol) AppendTag(tag *entities.Tag) {
 	k.tags = append(k.tags, tag)
 }
 
+func (k *Kol) GetKol() *entities.Kol {
+	return k.kol
+}
+
+func (k *Kol) GetTags() []*entities.Tag {
+	return k.tags
+}
+
 type SendEmailLog struct {
 	kols     []*entities.Kol
 	products []*entities.Product

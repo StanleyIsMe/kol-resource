@@ -3,8 +3,8 @@ package server
 import (
 	"context"
 	"fmt"
-	apiCfg "kol/internal/api/config"
-	"kol/pkg/config"
+	apiCfg "kolresource/internal/api/config"
+	"kolresource/pkg/config"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -37,7 +37,6 @@ func (s *Server) Start(ctx context.Context) error {
 		Str("commitTime", CommitTime).
 		Str("commitHash", CommitHash).
 		Msg(s.cfg.Name)
-
 
 	s.startHTTPServer()
 

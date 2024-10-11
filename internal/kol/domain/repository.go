@@ -10,6 +10,7 @@ import (
 
 type Repository interface {
 	GetKolByID(ctx context.Context, id uuid.UUID) (*entities.Kol, error)
+	GetKolByEmail(ctx context.Context, email string) (*entities.Kol, error)
 	CreateKol(ctx context.Context, param CreateKolParams) (*entities.Kol, error)
 	UpdateKol(ctx context.Context, param UpdateKolParams) (*entities.Kol, error)
 	DeleteKolByID(ctx context.Context, id uuid.UUID) error
@@ -19,8 +20,11 @@ type Repository interface {
 	CreateTag(ctx context.Context, param CreateTagParams) (*entities.Tag, error)
 	ListTagsByName(ctx context.Context, name string) ([]*entities.Tag, error)
 	DeleteTagByID(ctx context.Context, id uuid.UUID) error
+	GetTagByName(ctx context.Context, name string) (*entities.Tag, error)
 
 	CreateProduct(ctx context.Context, param CreateProductParams) (*entities.Product, error)
+	ListProductsByName(ctx context.Context, name string) ([]*entities.Product, error)
+	GetProductByName(ctx context.Context, name string) (*entities.Product, error)
 	GetProductByID(ctx context.Context, id uuid.UUID) (*entities.Product, error)
 	DeleteProductByID(ctx context.Context, id uuid.UUID) error
 
@@ -35,6 +39,12 @@ type CreateKolParams struct {
 	Sex            kol.Sex
 	Enable         bool
 	UpdatedAdminID uuid.UUID
+	Tags           []uuid.UUID
+}
+
+type Tag struct {
+	ID   uuid.UUID
+	Name string
 }
 
 type UpdateKolParams struct {
@@ -45,6 +55,7 @@ type UpdateKolParams struct {
 	Sex            kol.Sex
 	Enable         bool
 	UpdatedAdminID uuid.UUID
+	Tags           []uuid.UUID
 }
 
 type ListKolWithTagsByFiltersParams struct {
@@ -74,4 +85,14 @@ type ListSendEmailLogsByFilterParams struct {
 	KolName     *string
 	Page        int
 	PageSize    int
+}
+
+type CreateSendEmailLogParams struct {
+	KolID       uuid.UUID 
+	KolName     string   
+	Email       string   
+	AdminID     uuid.UUID 
+	AdminName   string   
+	ProductID   uuid.UUID 
+	ProductName string   
 }

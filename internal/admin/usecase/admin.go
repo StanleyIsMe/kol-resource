@@ -53,28 +53,31 @@ func (a *AdminUseCaseImpl) Register(ctx context.Context, param RegisterParams) e
 }
 
 // Login is responsible for logging in an admin user.
-func (a *AdminUseCaseImpl) Login(ctx context.Context, userName string, password string) (string, error) {
+func (a *AdminUseCaseImpl) Login(ctx context.Context, userName string, password string) (*LoginResponse, error) {
 	adminEntity, err := a.adminRepo.GetAdminByUserName(ctx, userName)
 	if err != nil {
 		if errors.Is(err, domain.ErrDataNotFound) {
-			return "", UnauthorizedError{err: errors.New("username not found")}
+			return nil, UnauthorizedError{err: errors.New("username not found")}
 		}
 
-		return "", InternalServerError{err: fmt.Errorf("adminRepo.GetAdminByUserName error: %w", err)}
+		return nil, InternalServerError{err: fmt.Errorf("adminRepo.GetAdminByUserName error: %w", err)}
 	}
 
 	argon2IDHash := NewArgon2idHash(1, 32, 64*1024, 1, 128)
 
 	if err := argon2IDHash.Compare([]byte(adminEntity.Password), []byte(adminEntity.Salt), []byte(password)); err != nil {
-		return "", UnauthorizedError{err: fmt.Errorf("argon2IDHash.Compare error: %w", err)}
+		return nil, UnauthorizedError{err: fmt.Errorf("argon2IDHash.Compare error: %w", err)}
 	}
 
 	token, err := a.generateJWT(adminEntity.ID, adminEntity.Name)
 	if err != nil {
-		return "", InternalServerError{err: fmt.Errorf("generateJWT error: %w", err)}
+		return nil, InternalServerError{err: fmt.Errorf("generateJWT error: %w", err)}
 	}
 
-	return token, nil
+	return &LoginResponse{
+		Token:     token,
+		AdminName: adminEntity.Name,
+	}, nil
 }
 
 type JWTAdminClaims struct {

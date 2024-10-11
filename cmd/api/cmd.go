@@ -6,10 +6,10 @@ import (
 	"syscall"
 	"time"
 
-	"kol/internal/api"
-	apiCfg "kol/internal/api/config"
-	"kol/pkg/config"
-	"kol/pkg/shutdown"
+	"kolresource/internal/api"
+	apiCfg "kolresource/internal/api/config"
+	"kolresource/pkg/config"
+	"kolresource/pkg/shutdown"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
