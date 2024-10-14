@@ -25,6 +25,7 @@ import (
 type SendEmailLog struct {
 	ID          string    `boil:"id" json:"id" toml:"id" yaml:"id"`
 	KolID       string    `boil:"kol_id" json:"kol_id" toml:"kol_id" yaml:"kol_id"`
+	KolName     string    `boil:"kol_name" json:"kol_name" toml:"kol_name" yaml:"kol_name"`
 	Email       string    `boil:"email" json:"email" toml:"email" yaml:"email"`
 	AdminID     string    `boil:"admin_id" json:"admin_id" toml:"admin_id" yaml:"admin_id"`
 	AdminName   string    `boil:"admin_name" json:"admin_name" toml:"admin_name" yaml:"admin_name"`
@@ -39,6 +40,7 @@ type SendEmailLog struct {
 var SendEmailLogColumns = struct {
 	ID          string
 	KolID       string
+	KolName     string
 	Email       string
 	AdminID     string
 	AdminName   string
@@ -48,6 +50,7 @@ var SendEmailLogColumns = struct {
 }{
 	ID:          "id",
 	KolID:       "kol_id",
+	KolName:     "kol_name",
 	Email:       "email",
 	AdminID:     "admin_id",
 	AdminName:   "admin_name",
@@ -59,6 +62,7 @@ var SendEmailLogColumns = struct {
 var SendEmailLogTableColumns = struct {
 	ID          string
 	KolID       string
+	KolName     string
 	Email       string
 	AdminID     string
 	AdminName   string
@@ -68,6 +72,7 @@ var SendEmailLogTableColumns = struct {
 }{
 	ID:          "send_email_log.id",
 	KolID:       "send_email_log.kol_id",
+	KolName:     "send_email_log.kol_name",
 	Email:       "send_email_log.email",
 	AdminID:     "send_email_log.admin_id",
 	AdminName:   "send_email_log.admin_name",
@@ -81,6 +86,7 @@ var SendEmailLogTableColumns = struct {
 var SendEmailLogWhere = struct {
 	ID          whereHelperstring
 	KolID       whereHelperstring
+	KolName     whereHelperstring
 	Email       whereHelperstring
 	AdminID     whereHelperstring
 	AdminName   whereHelperstring
@@ -90,6 +96,7 @@ var SendEmailLogWhere = struct {
 }{
 	ID:          whereHelperstring{field: "\"send_email_log\".\"id\""},
 	KolID:       whereHelperstring{field: "\"send_email_log\".\"kol_id\""},
+	KolName:     whereHelperstring{field: "\"send_email_log\".\"kol_name\""},
 	Email:       whereHelperstring{field: "\"send_email_log\".\"email\""},
 	AdminID:     whereHelperstring{field: "\"send_email_log\".\"admin_id\""},
 	AdminName:   whereHelperstring{field: "\"send_email_log\".\"admin_name\""},
@@ -115,8 +122,8 @@ func (*sendEmailLogR) NewStruct() *sendEmailLogR {
 type sendEmailLogL struct{}
 
 var (
-	sendEmailLogAllColumns            = []string{"id", "kol_id", "email", "admin_id", "admin_name", "product_id", "product_name", "created_at"}
-	sendEmailLogColumnsWithoutDefault = []string{"kol_id", "email", "admin_id", "admin_name", "product_id", "product_name"}
+	sendEmailLogAllColumns            = []string{"id", "kol_id", "kol_name", "email", "admin_id", "admin_name", "product_id", "product_name", "created_at"}
+	sendEmailLogColumnsWithoutDefault = []string{"kol_id", "kol_name", "email", "admin_id", "admin_name", "product_id", "product_name"}
 	sendEmailLogColumnsWithDefault    = []string{"id", "created_at"}
 	sendEmailLogPrimaryKeyColumns     = []string{"id"}
 	sendEmailLogGeneratedColumns      = []string{}

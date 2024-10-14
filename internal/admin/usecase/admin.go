@@ -2,10 +2,14 @@ package usecase
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"kolresource/internal/admin/domain"
 	"kolresource/internal/admin/domain/entities"
+
+	apiCfg "kolresource/internal/api/config"
+	"kolresource/pkg/config"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -14,10 +18,11 @@ import (
 
 type AdminUseCaseImpl struct {
 	adminRepo domain.Repository
+	cfg       *config.Config[apiCfg.Config]
 }
 
-func NewAdminUseCaseImpl(adminRepo domain.Repository) *AdminUseCaseImpl {
-	return &AdminUseCaseImpl{adminRepo: adminRepo}
+func NewAdminUseCaseImpl(adminRepo domain.Repository, cfg *config.Config[apiCfg.Config]) *AdminUseCaseImpl {
+	return &AdminUseCaseImpl{adminRepo: adminRepo, cfg: cfg}
 }
 
 // Register is responsible for registering a new admin user.
@@ -41,8 +46,8 @@ func (a *AdminUseCaseImpl) Register(ctx context.Context, param RegisterParams) e
 	adminEntity := &entities.Admin{
 		Username: param.UserName,
 		Name:     param.Name,
-		Salt:     string(hashSalt.Salt),
-		Password: string(hashSalt.Hash),
+		Salt:     base64.StdEncoding.EncodeToString(hashSalt.Salt),
+		Password: base64.StdEncoding.EncodeToString(hashSalt.Hash),
 	}
 
 	if _, err := a.adminRepo.CreateAdmin(ctx, adminEntity); err != nil {
@@ -65,7 +70,17 @@ func (a *AdminUseCaseImpl) Login(ctx context.Context, userName string, password 
 
 	argon2IDHash := NewArgon2idHash(1, 32, 64*1024, 1, 128)
 
-	if err := argon2IDHash.Compare([]byte(adminEntity.Password), []byte(adminEntity.Salt), []byte(password)); err != nil {
+	hash, err := base64.StdEncoding.DecodeString(adminEntity.Password)
+	if err != nil {
+		return nil, InternalServerError{err: fmt.Errorf("base64.StdEncoding.DecodeString error: %w", err)}
+	}
+
+	salt, err := base64.StdEncoding.DecodeString(adminEntity.Salt)
+	if err != nil {
+		return nil, InternalServerError{err: fmt.Errorf("base64.StdEncoding.DecodeString error: %w", err)}
+	}
+
+	if err := argon2IDHash.Compare(hash, salt, []byte(password)); err != nil {
 		return nil, UnauthorizedError{err: fmt.Errorf("argon2IDHash.Compare error: %w", err)}
 	}
 
@@ -80,12 +95,6 @@ func (a *AdminUseCaseImpl) Login(ctx context.Context, userName string, password 
 	}, nil
 }
 
-type JWTAdminClaims struct {
-	AdminID   uuid.UUID `json:"admin_id"`
-	AdminName string    `json:"admin_name"`
-	jwt.RegisteredClaims
-}
-
 const (
 	signKey = "kolresourceKey"
 )
@@ -95,18 +104,18 @@ func (a *AdminUseCaseImpl) generateJWT(adminID uuid.UUID, adminName string) (str
 		adminID,
 		adminName,
 		jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(48 * time.Hour)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(a.cfg.CustomConfig.Auth.JWTExp)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			NotBefore: jwt.NewNumericDate(time.Now()),
 			Issuer:    "kolresource",
-			Subject:   "internal",
+			Subject:   "admin",
 			ID:        "1",
 			Audience:  []string{"stanley"},
 		},
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	jwtToken, err := token.SignedString([]byte(signKey))
+	jwtToken, err := token.SignedString([]byte(a.cfg.CustomConfig.Auth.JWTKey))
 	if err != nil {
 		return "", fmt.Errorf("jwt generate error: %w", err)
 	}
@@ -114,17 +123,19 @@ func (a *AdminUseCaseImpl) generateJWT(adminID uuid.UUID, adminName string) (str
 	return jwtToken, nil
 }
 
-func (a *AdminUseCaseImpl) LoginTokenParser(ctx context.Context, tokenString string) error {
-	_, err := jwt.ParseWithClaims(tokenString, &JWTAdminClaims{}, func(token *jwt.Token) (interface{}, error) {
-		return []byte(signKey), nil
+func (a *AdminUseCaseImpl) LoginTokenParser(ctx context.Context, tokenString string) (*JWTAdminClaims, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &JWTAdminClaims{}, func(token *jwt.Token) (interface{}, error) {
+		return []byte(a.cfg.CustomConfig.Auth.JWTKey), nil
 	})
 
 	if err != nil {
-		return fmt.Errorf("jwt parse error: %w", err)
+		return nil, fmt.Errorf("jwt parse error: %w", err)
 	}
 
-	// if claims, ok := token.Claims.(*JWTAdminClaims); ok {
-	// }
+	claims, ok := token.Claims.(*JWTAdminClaims)
+	if !ok {
+		return nil, fmt.Errorf("invalid token claims")
+	}
 
-	return nil
+	return claims, nil
 }

@@ -252,6 +252,30 @@ func (repo *KolRepository) GetKolWithTagsByID(ctx context.Context, id uuid.UUID)
 	return kolAggregate, nil
 }
 
+func (repo *KolRepository) ListKolsByIDs(ctx context.Context, ids []uuid.UUID) ([]*entities.Kol, error) {
+	idArr := make([]interface{}, len(ids))
+	for index, id := range ids {
+		idArr[index] = id.String()
+	}
+
+	query := qm.WhereIn("id IN ?", idArr...)
+	models, err := model.Kols(query).All(ctx, repo.db)
+	if err != nil {
+		return nil, domain.QueryRecordError{Err: err}
+	}
+
+	entityKols := make([]*entities.Kol, len(models))
+	for index, model := range models {
+		model := model
+		entityKols[index], err = repo.newKolFromModel(model)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create kol from model: %w", err)
+		}
+	}
+
+	return entityKols, nil
+}
+
 func (repo *KolRepository) ListKolWithTagsByFilters(ctx context.Context, param domain.ListKolWithTagsByFiltersParams) ([]*domain.Kol, int, error) {
 	var kolWithTags []KolWithTags
 
@@ -265,7 +289,7 @@ func (repo *KolRepository) ListKolWithTagsByFilters(ctx context.Context, param d
 	}
 
 	if param.Tag != nil {
-		query = append(query, qm.Where("tag.name LIKE %?%", *param.Tag))
+		query = append(query, qm.Where("tag.name LIKE ?", "%"+*param.Tag+"%"))
 	}
 
 	if param.Sex != nil {
@@ -273,11 +297,11 @@ func (repo *KolRepository) ListKolWithTagsByFilters(ctx context.Context, param d
 	}
 
 	if param.Email != nil {
-		query = append(query, qm.Where("kol.email LIKE %?%", *param.Email))
+		query = append(query, qm.Where("kol.email LIKE ?", "%"+*param.Email+"%"))
 	}
 
 	if param.Name != nil {
-		query = append(query, qm.Where("kol.name LIKE %?%", *param.Name))
+		query = append(query, qm.Where("kol.name LIKE ?", "%"+*param.Name+"%"))
 	}
 
 	err := model.NewQuery(query...).Bind(ctx, repo.db, &kolWithTags)
@@ -314,7 +338,7 @@ func (repo *KolRepository) countKolWithTagsByFilters(ctx context.Context, param 
 	}
 
 	if param.Tag != nil {
-		query = append(query, qm.Where("tag.name LIKE %?%", *param.Tag))
+		query = append(query, qm.Where("tag.name LIKE ?", "%"+*param.Tag+"%"))
 	}
 
 	if param.Sex != nil {
@@ -322,15 +346,19 @@ func (repo *KolRepository) countKolWithTagsByFilters(ctx context.Context, param 
 	}
 
 	if param.Email != nil {
-		query = append(query, qm.Where("kol.email LIKE %?%", *param.Email))
+		query = append(query, qm.Where("kol.email LIKE ?", "%"+*param.Email+"%"))
 	}
 
 	if param.Name != nil {
-		query = append(query, qm.Where("kol.name LIKE %?%", *param.Name))
+		query = append(query, qm.Where("kol.name LIKE ?", "%"+*param.Name+"%"))
 	}
 
 	err := model.NewQuery(query...).Bind(ctx, repo.db, &count)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return 0, nil
+		}
+
 		return 0, domain.QueryRecordError{Err: err}
 	}
 
@@ -401,6 +429,23 @@ func (repo *KolRepository) DeleteTagByID(ctx context.Context, id uuid.UUID) erro
 	return nil
 }
 
+func (repo *KolRepository) ListTagsByName(ctx context.Context, name string) ([]*entities.Tag, error) {
+	tagModels, err := model.Tags(qm.Where("name LIKE ?", "%"+name+"%")).All(ctx, repo.db)
+	if err != nil {
+		return nil, domain.QueryRecordError{Err: err}
+	}
+
+	tags := make([]*entities.Tag, len(tagModels))
+	for index, tagModel := range tagModels {
+		tags[index], err = repo.newTagFromModel(tagModel)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create tag from model: %w", err)
+		}
+	}
+
+	return tags, nil
+}
+
 func (repo *KolRepository) CreateProduct(ctx context.Context, param domain.CreateProductParams) (*entities.Product, error) {
 	productUUID, err := uuid.NewV7()
 	if err != nil {
@@ -423,7 +468,7 @@ func (repo *KolRepository) CreateProduct(ctx context.Context, param domain.Creat
 }
 
 func (repo *KolRepository) ListProductsByName(ctx context.Context, name string) ([]*entities.Product, error) {
-	productModels, err := model.Products(qm.Where("name LIKE %?%", name)).All(ctx, repo.db)
+	productModels, err := model.Products(qm.Where("name LIKE ?", "%"+name+"%")).All(ctx, repo.db)
 	if err != nil {
 		return nil, domain.QueryRecordError{Err: err}
 	}
@@ -492,6 +537,7 @@ func (repo *KolRepository) CreateSendEmailLog(ctx context.Context, sendEmailLog 
 	sendEmailLogModel := &model.SendEmailLog{
 		ID:          sendEmailLogUUID.String(),
 		KolID:       sendEmailLog.KolID.String(),
+		KolName:     sendEmailLog.KolName,
 		Email:       sendEmailLog.Email,
 		AdminID:     sendEmailLog.AdminID.String(),
 		AdminName:   sendEmailLog.AdminName,
@@ -523,19 +569,19 @@ func (repo *KolRepository) ListSendEmailLogsByFilter(ctx context.Context, param 
 	}
 
 	if param.Email != nil {
-		query = append(query, qm.Where("email LIKE %?%", *param.Email))
+		query = append(query, qm.Where("email LIKE ?", "%"+*param.Email+"%"))
 	}
 
 	if param.ProductName != nil {
-		query = append(query, qm.Where("product_name LIKE %?%", *param.ProductName))
+		query = append(query, qm.Where("product_name LIKE ?", "%"+*param.ProductName+"%"))
 	}
 
 	if param.AdminName != nil {
-		query = append(query, qm.Where("admin_id Like %?%", *param.AdminName))
+		query = append(query, qm.Where("admin_id Like ?", "%"+*param.AdminName+"%"))
 	}
 
 	if param.KolName != nil {
-		query = append(query, qm.Where("kol_name LIKE %?%", *param.KolName))
+		query = append(query, qm.Where("kol_name LIKE ?", "%"+*param.KolName+"%"))
 	}
 
 	modelLogs, err := model.SendEmailLogs(query...).All(ctx, repo.db)
@@ -590,23 +636,27 @@ func (repo *KolRepository) countSendEmailLogsByFilter(ctx context.Context, param
 	}
 
 	if param.Email != nil {
-		query = append(query, qm.Where("email LIKE %?%", *param.Email))
+		query = append(query, qm.Where("email LIKE ?", "%"+*param.Email+"%"))
 	}
 
 	if param.ProductName != nil {
-		query = append(query, qm.Where("product_name LIKE %?%", *param.ProductName))
+		query = append(query, qm.Where("product_name LIKE ?", "%"+*param.ProductName+"%"))
 	}
 
 	if param.AdminName != nil {
-		query = append(query, qm.Where("admin_id Like %?%", *param.AdminName))
+		query = append(query, qm.Where("admin_id Like ?", "%"+*param.AdminName+"%"))
 	}
 
 	if param.KolName != nil {
-		query = append(query, qm.Where("kol_name LIKE %?%", *param.KolName))
+		query = append(query, qm.Where("kol_name LIKE ?", "%"+*param.KolName+"%"))
 	}
 
 	err := model.NewQuery(query...).Bind(ctx, repo.db, &count)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return 0, nil
+		}
+
 		return 0, domain.QueryRecordError{Err: err}
 	}
 

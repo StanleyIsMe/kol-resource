@@ -14,8 +14,9 @@ type Repository interface {
 	CreateKol(ctx context.Context, param CreateKolParams) (*entities.Kol, error)
 	UpdateKol(ctx context.Context, param UpdateKolParams) (*entities.Kol, error)
 	DeleteKolByID(ctx context.Context, id uuid.UUID) error
-	GetKolWithTagByID(ctx context.Context, id uuid.UUID) (*Kol, error)
+	GetKolWithTagsByID(ctx context.Context, id uuid.UUID) (*Kol, error)
 	ListKolWithTagsByFilters(ctx context.Context, param ListKolWithTagsByFiltersParams) ([]*Kol, int, error)
+	ListKolsByIDs(ctx context.Context, ids []uuid.UUID) ([]*entities.Kol, error)
 
 	CreateTag(ctx context.Context, param CreateTagParams) (*entities.Tag, error)
 	ListTagsByName(ctx context.Context, name string) ([]*entities.Tag, error)
@@ -30,6 +31,10 @@ type Repository interface {
 
 	CreateSendEmailLog(ctx context.Context, sendEmailLog *entities.SendEmailLog) (*entities.SendEmailLog, error)
 	ListSendEmailLogsByFilter(ctx context.Context, param ListSendEmailLogsByFilterParams) ([]*entities.SendEmailLog, int, error)
+}
+
+type EmailRepository interface {
+	SendEmail(ctx context.Context, param SendEmailParams) error
 }
 
 type CreateKolParams struct {
@@ -88,11 +93,24 @@ type ListSendEmailLogsByFilterParams struct {
 }
 
 type CreateSendEmailLogParams struct {
-	KolID       uuid.UUID 
-	KolName     string   
-	Email       string   
-	AdminID     uuid.UUID 
-	AdminName   string   
-	ProductID   uuid.UUID 
-	ProductName string   
+	KolID       uuid.UUID
+	KolName     string
+	Email       string
+	AdminID     uuid.UUID
+	AdminName   string
+	ProductID   uuid.UUID
+	ProductName string
+}
+
+type SendEmailParams struct {
+	AdminEmail string
+	AdminPass  string
+	Subject    string
+	Body       string
+	ToEmails   []ToEmail
+}
+
+type ToEmail struct {
+	Email string
+	Name  string
 }

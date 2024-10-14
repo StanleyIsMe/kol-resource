@@ -4,17 +4,22 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	apiCfg "kolresource/internal/api/config"
 	"kolresource/internal/kol/domain"
+	"kolresource/internal/kol/domain/entities"
+	"kolresource/pkg/config"
 
 	"github.com/google/uuid"
 )
 
 type KolUseCaseImpl struct {
-	repo domain.Repository
+	repo      domain.Repository
+	emailRepo domain.EmailRepository
+	cfg       *config.Config[apiCfg.Config]
 }
 
-func NewKolUseCase(repo domain.Repository) KolUseCase {
-	return &KolUseCaseImpl{repo: repo}
+func NewKolUseCaseImpl(repo domain.Repository, emailRepo domain.EmailRepository, cfg *config.Config[apiCfg.Config]) KolUseCase {
+	return &KolUseCaseImpl{repo: repo, emailRepo: emailRepo, cfg: cfg}
 }
 
 func (uc *KolUseCaseImpl) CreateKol(ctx context.Context, param CreateKolParam) error {
@@ -46,7 +51,32 @@ func (uc *KolUseCaseImpl) CreateKol(ctx context.Context, param CreateKolParam) e
 }
 
 func (uc *KolUseCaseImpl) GetKolByID(ctx context.Context, kolID uuid.UUID) (*Kol, error) {
-	return nil, nil
+	kolAggregate, err := uc.repo.GetKolWithTagsByID(ctx, kolID)
+	if err != nil {
+		if errors.Is(err, domain.ErrDataNotFound) {
+			return nil, NotFoundError{resource: "kol", id: kolID.String()}
+		}
+
+		return nil, fmt.Errorf("repo.GetKolWithTagsByID error: %w", err)
+	}
+
+	kol := &Kol{
+		ID:          kolAggregate.GetKol().ID,
+		Name:        kolAggregate.GetKol().Name,
+		Email:       kolAggregate.GetKol().Email,
+		Description: kolAggregate.GetKol().Description,
+		Sex:         kolAggregate.GetKol().Sex,
+		Tags:        make([]Tag, 0, len(kolAggregate.GetTags())),
+	}
+
+	for _, tag := range kolAggregate.GetTags() {
+		kol.Tags = append(kol.Tags, Tag{
+			ID:   tag.ID,
+			Name: tag.Name,
+		})
+	}
+
+	return kol, nil
 }
 
 func (uc *KolUseCaseImpl) UpdateKol(ctx context.Context, param UpdateKolParam) error {
@@ -159,8 +189,9 @@ func (uc *KolUseCaseImpl) CreateProduct(ctx context.Context, param CreateProduct
 	}
 
 	_, err = uc.repo.CreateProduct(ctx, domain.CreateProductParams{
-		Name:        param.Name,
-		Description: param.Description,
+		Name:           param.Name,
+		Description:    param.Description,
+		UpdatedAdminID: param.UpdatedAdminID,
 	})
 
 	if err != nil {
@@ -189,5 +220,56 @@ func (uc *KolUseCaseImpl) ListProductsByName(ctx context.Context, name string) (
 }
 
 func (uc *KolUseCaseImpl) SendEmail(ctx context.Context, param SendEmailParam) error {
+	product, err := uc.repo.GetProductByID(ctx, param.ProductID)
+	if err != nil {
+		if errors.Is(err, domain.ErrDataNotFound) {
+			return NotFoundError{resource: "product", id: param.ProductID.String()}
+		}
+
+		return fmt.Errorf("repo.GetProductByID error: %w", err)
+	}
+
+	kols, err := uc.repo.ListKolsByIDs(ctx, param.KolIDs)
+	if err != nil {
+		return fmt.Errorf("repo.ListKolsByIDs error: %w", err)
+	}
+
+	if len(kols) == 0 {
+		return NotFoundError{resource: "kol", id: param.KolIDs}
+	}
+
+	sendEmailParams := domain.SendEmailParams{
+		AdminEmail: uc.cfg.CustomConfig.Email.AdminEmail,
+		AdminPass:  uc.cfg.CustomConfig.Email.AdminPass,
+		Subject:    param.Subject,
+		Body:       param.EmailContent,
+		ToEmails:   make([]domain.ToEmail, 0, len(kols)),
+	}
+
+	for _, kol := range kols {
+		sendEmailParams.ToEmails = append(sendEmailParams.ToEmails, domain.ToEmail{
+			Email: kol.Email,
+			Name:  kol.Name,
+		})
+	}
+
+	if err := uc.emailRepo.SendEmail(ctx, sendEmailParams); err != nil {
+		return fmt.Errorf("emailRepo.SendEmail error: %w", err)
+	}
+
+	for _, kol := range kols {
+		if _, err := uc.repo.CreateSendEmailLog(ctx, &entities.SendEmailLog{
+			AdminID:     param.UpdatedAdminID,
+			AdminName:   param.UpdatedAdminName,
+			KolID:       kol.ID,
+			KolName:     kol.Name,
+			Email:       kol.Email,
+			ProductID:   param.ProductID,
+			ProductName: product.Name,
+		}); err != nil {
+			return fmt.Errorf("repo.CreateSendEmailLog error: %w", err)
+		}
+	}
+
 	return nil
 }

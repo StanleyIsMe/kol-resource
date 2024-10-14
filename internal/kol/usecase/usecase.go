@@ -82,6 +82,10 @@ type CreateProductParam struct {
 }
 
 type SendEmailParam struct {
-	EmailContent string      `json:"email_content"`
-	KolIDs       []uuid.UUID `json:"kol_ids"`
+	Subject          string      `json:"subject"`
+	EmailContent     string      `json:"email_content"`
+	KolIDs           []uuid.UUID `json:"kol_ids"`
+	ProductID        uuid.UUID   `json:"product_id"`
+	UpdatedAdminID   uuid.UUID   `json:"updated_admin_id"`
+	UpdatedAdminName string      `json:"updated_admin_name"`
 }

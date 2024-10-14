@@ -5,7 +5,9 @@ import (
 )
 
 type Config struct {
-	DB Database `yaml:"db" json:"db"`
+	DB    Database `yaml:"db" json:"db"`
+	Email Email    `yaml:"email" json:"email"`
+	Auth  Auth     `yaml:"auth" json:"auth"`
 }
 
 type Database struct {
@@ -17,4 +19,16 @@ type Database struct {
 	MaxConns     int32         `yaml:"maxConns" json:"maxConns"`
 	MaxIdleConns int32         `yaml:"maxIdleConns" json:"maxIdleConns"`
 	MaxLifeTime  time.Duration `yaml:"maxLifeTime" json:"maxLifeTime"`
+}
+
+type Email struct {
+	AdminEmail string `yaml:"adminEmail" json:"adminEmail"`
+	AdminPass  string `yaml:"adminPass" json:"adminPass"`
+	ServerHost string `yaml:"serverHost" json:"serverHost"`
+	ServerPort int    `yaml:"serverPort" json:"serverPort"`
+}
+
+type Auth struct {
+	JWTKey string        `yaml:"jwtKey" json:"jwtKey"`
+	JWTExp time.Duration `yaml:"jwtExp" json:"jwtExp"`
 }

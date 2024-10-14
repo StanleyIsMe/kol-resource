@@ -1,0 +1,24 @@
+env: local
+name: kolresource
+prettylog: true
+logLevel: debug
+debug: true
+
+http:
+  port: 8080
+  timeouts:
+    readTimeout: 2s
+    readHeaderTimeout: 2s
+    writeTimeout: 10s
+    idleTimeout: 5s
+
+custom:
+  db:
+    port: 5432
+    host: localhost
+    user: postgres
+    password: postgres
+    database: postgres
+    maxConns: 10
+    maxIdleConns: 5
+    maxLifeTime: 1h

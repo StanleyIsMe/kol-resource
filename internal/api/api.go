@@ -2,12 +2,8 @@ package api
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 
-	"kolresource/internal/admin/delivery/http"
-	adminRepo "kolresource/internal/admin/repository"
-	adminUseCase "kolresource/internal/admin/usecase"
 	apiCfg "kolresource/internal/api/config"
 	"kolresource/internal/api/repository"
 	"kolresource/internal/api/server"
@@ -15,6 +11,7 @@ import (
 	"kolresource/pkg/shutdown"
 
 	"github.com/rs/zerolog"
+	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
 type API struct {
@@ -43,6 +40,10 @@ func (a *API) Start(ctx context.Context) error {
 		return fmt.Errorf("failed to initialize PGStdConn: %w", err)
 	}
 
+	if a.cfg.Debug {
+		boil.DebugMode = true
+	}
+
 	a.shutdownHandler.Add("pgStdConn", func(ctx context.Context) error {
 		return pgStdConn.Close()
 	})
@@ -56,15 +57,4 @@ func (a *API) Start(ctx context.Context) error {
 	a.shutdownHandler.Add("server", apiS.Shutdown)
 
 	return nil
-}
-
-func (a *API) registerHTTPSvc(_ context.Context, dbStdConn *sql.DB) {
-	a.server.SetupHTTPServer()
-	httpRouter := a.server.HTTPRouter()
-
-	adminRepository := adminRepo.NewAdminRepository(dbStdConn)
-
-	adminUseCase := adminUseCase.NewAdminUseCaseImpl(adminRepository)
-
-	http.RegisterAdminRoutes(httpRouter, adminUseCase)
 }
