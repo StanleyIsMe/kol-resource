@@ -12,6 +12,7 @@ type Kol struct {
 	Name           string    `json:"name"`
 	Email          string    `json:"email"`
 	Description    string    `json:"description"`
+	SocialMedia    string    `json:"social_media"`
 	Sex            kol.Sex   `json:"sex"`
 	Enable         bool      `json:"enable"`
 	UpdatedAdminID uuid.UUID `json:"updated_admin_id"`

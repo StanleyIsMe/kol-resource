@@ -33,6 +33,7 @@ func (a *API) registerHTTPSvc(_ context.Context, dbStdConn *sql.DB) {
 	kolUseCase := kolUseCase.NewKolUseCaseImpl(kolRepository, emailRepository, a.cfg)
 
 	httpRouter.Use(
+		middleware.Cors(),
 		pkgMiddleware.GinRecover(a.logger),
 		pkgMiddleware.GinContextLogger(a.logger),
 		pkgMiddleware.GinTimeout(a.logger, defaultTimeout),

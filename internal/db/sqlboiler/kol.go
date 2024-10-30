@@ -34,6 +34,7 @@ type Kol struct {
 	CreatedAt      time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
 	UpdatedAt      time.Time `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
 	DeletedAt      null.Time `boil:"deleted_at" json:"deleted_at,omitempty" toml:"deleted_at" yaml:"deleted_at,omitempty"`
+	SocialMedia    string    `boil:"social_media" json:"social_media" toml:"social_media" yaml:"social_media"`
 
 	R *kolR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L kolL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -50,6 +51,7 @@ var KolColumns = struct {
 	CreatedAt      string
 	UpdatedAt      string
 	DeletedAt      string
+	SocialMedia    string
 }{
 	ID:             "id",
 	Name:           "name",
@@ -61,6 +63,7 @@ var KolColumns = struct {
 	CreatedAt:      "created_at",
 	UpdatedAt:      "updated_at",
 	DeletedAt:      "deleted_at",
+	SocialMedia:    "social_media",
 }
 
 var KolTableColumns = struct {
@@ -74,6 +77,7 @@ var KolTableColumns = struct {
 	CreatedAt      string
 	UpdatedAt      string
 	DeletedAt      string
+	SocialMedia    string
 }{
 	ID:             "kol.id",
 	Name:           "kol.name",
@@ -85,6 +89,7 @@ var KolTableColumns = struct {
 	CreatedAt:      "kol.created_at",
 	UpdatedAt:      "kol.updated_at",
 	DeletedAt:      "kol.deleted_at",
+	SocialMedia:    "kol.social_media",
 }
 
 // Generated where
@@ -132,6 +137,7 @@ var KolWhere = struct {
 	CreatedAt      whereHelpertime_Time
 	UpdatedAt      whereHelpertime_Time
 	DeletedAt      whereHelpernull_Time
+	SocialMedia    whereHelperstring
 }{
 	ID:             whereHelperstring{field: "\"kol\".\"id\""},
 	Name:           whereHelperstring{field: "\"kol\".\"name\""},
@@ -143,6 +149,7 @@ var KolWhere = struct {
 	CreatedAt:      whereHelpertime_Time{field: "\"kol\".\"created_at\""},
 	UpdatedAt:      whereHelpertime_Time{field: "\"kol\".\"updated_at\""},
 	DeletedAt:      whereHelpernull_Time{field: "\"kol\".\"deleted_at\""},
+	SocialMedia:    whereHelperstring{field: "\"kol\".\"social_media\""},
 }
 
 // KolRels is where relationship names are stored.
@@ -162,9 +169,9 @@ func (*kolR) NewStruct() *kolR {
 type kolL struct{}
 
 var (
-	kolAllColumns            = []string{"id", "name", "email", "description", "sex", "enable", "updated_admin_id", "created_at", "updated_at", "deleted_at"}
+	kolAllColumns            = []string{"id", "name", "email", "description", "sex", "enable", "updated_admin_id", "created_at", "updated_at", "deleted_at", "social_media"}
 	kolColumnsWithoutDefault = []string{"name", "email", "description", "sex", "enable", "updated_admin_id"}
-	kolColumnsWithDefault    = []string{"id", "created_at", "updated_at", "deleted_at"}
+	kolColumnsWithDefault    = []string{"id", "created_at", "updated_at", "deleted_at", "social_media"}
 	kolPrimaryKeyColumns     = []string{"id"}
 	kolGeneratedColumns      = []string{}
 )

@@ -27,6 +27,7 @@ type Kol struct {
 	Name        string    `json:"name"`
 	Email       string    `json:"email"`
 	Description string    `json:"description"`
+	SocialMedia string    `json:"social_media"`
 	Sex         kol.Sex   `json:"sex"`
 	Tags        []Tag     `json:"tags"`
 }
@@ -46,6 +47,7 @@ type CreateKolParam struct {
 	Name           string      `json:"name"`
 	Email          string      `json:"email"`
 	Description    string      `json:"description"`
+	SocialMedia    string      `json:"social_media"`
 	Sex            kol.Sex     `json:"sex"`
 	Tags           []uuid.UUID `json:"tags"`
 	UpdatedAdminID uuid.UUID   `json:"updated_admin_id"`
@@ -56,6 +58,7 @@ type UpdateKolParam struct {
 	Name           string      `json:"name"`
 	Email          string      `json:"email"`
 	Description    string      `json:"description"`
+	SocialMedia    string      `json:"social_media"`
 	Sex            kol.Sex     `json:"sex"`
 	Tags           []uuid.UUID `json:"tags"`
 	UpdatedAdminID uuid.UUID   `json:"updated_admin_id"`
@@ -65,6 +68,7 @@ type ListKolsParam struct {
 	Email    *string
 	Name     *string
 	Tag      *string
+	TagIDs   []uuid.UUID
 	Sex      *kol.Sex
 	Page     int `json:"page"`
 	PageSize int `json:"page_size"`

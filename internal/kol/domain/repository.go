@@ -40,6 +40,7 @@ type EmailRepository interface {
 type CreateKolParams struct {
 	Name           string
 	Email          string
+	SocialMedia    string
 	Description    string
 	Sex            kol.Sex
 	Enable         bool
@@ -56,6 +57,7 @@ type UpdateKolParams struct {
 	ID             uuid.UUID
 	Name           string
 	Email          string
+	SocialMedia    string
 	Description    string
 	Sex            kol.Sex
 	Enable         bool
@@ -67,6 +69,7 @@ type ListKolWithTagsByFiltersParams struct {
 	Email    *string
 	Name     *string
 	Tag      *string
+	TagIDs   []uuid.UUID
 	Sex      *kol.Sex
 	Page     int
 	PageSize int

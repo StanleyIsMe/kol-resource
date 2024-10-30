@@ -12,9 +12,10 @@ import (
 )
 
 type CreateKolRequest struct {
-	Name        string      `json:"name" binding:"required"`
+	Name        string      `json:"name" binding:"required,lte=50"`
 	Email       string      `json:"email" binding:"required,email"`
 	Description string      `json:"description" binding:"lte=500"`
+	SocialMedia string      `json:"social_media" binding:"lte=255"`
 	Sex         kol.Sex     `json:"sex" binding:"required,oneof=m f"`
 	Tags        []uuid.UUID `json:"tags"`
 }
@@ -24,6 +25,7 @@ func (r *CreateKolRequest) ToUsecaseParam(c *gin.Context) usecase.CreateKolParam
 		Name:           r.Name,
 		Email:          r.Email,
 		Description:    r.Description,
+		SocialMedia:    r.SocialMedia,
 		Sex:            r.Sex,
 		Tags:           r.Tags,
 		UpdatedAdminID: GetAdminIDFromContext(c),
@@ -34,6 +36,7 @@ type UpdateKolRequest struct {
 	Name        string      `json:"name" binding:"required"`
 	Email       string      `json:"email" binding:"required,email"`
 	Description string      `json:"description" binding:"lte=500"`
+	SocialMedia string      `json:"social_media" binding:"lte=255"`
 	Sex         kol.Sex     `json:"sex" binding:"required,oneof=m f"`
 	Tags        []uuid.UUID `json:"tags"`
 }
@@ -49,6 +52,7 @@ func (r *UpdateKolRequest) ToUsecaseParam(c *gin.Context) (usecase.UpdateKolPara
 		Name:           r.Name,
 		Email:          r.Email,
 		Description:    r.Description,
+		SocialMedia:    r.SocialMedia,
 		Sex:            r.Sex,
 		Tags:           r.Tags,
 		UpdatedAdminID: GetAdminIDFromContext(c),
@@ -56,23 +60,35 @@ func (r *UpdateKolRequest) ToUsecaseParam(c *gin.Context) (usecase.UpdateKolPara
 }
 
 type ListKolsRequest struct {
-	Email *string  `form:"email,omitempty"`
-	Name  *string  `form:"name,omitempty"`
-	Tag   *string  `form:"tag,omitempty"`
-	Sex   *kol.Sex `form:"sex,omitempty" binding:"omitempty,oneof=m f"`
+	Email  *string  `form:"email,omitempty"`
+	Name   *string  `form:"name,omitempty"`
+	Tag    *string  `form:"tag,omitempty"`
+	TagIDs []string `form:"tag_ids[]"`
+	Sex    *kol.Sex `form:"sex,omitempty" binding:"omitempty,oneof=m f"`
 
 	pager.Page
 }
 
-func (r *ListKolsRequest) ToUsecaseParam() usecase.ListKolsParam {
+func (r *ListKolsRequest) ToUsecaseParam() (usecase.ListKolsParam, error) {
+	tagIDs := make([]uuid.UUID, len(r.TagIDs))
+	for index, tagID := range r.TagIDs {
+		tagUUID, err := uuid.Parse(tagID)
+		if err != nil {
+			return usecase.ListKolsParam{}, fmt.Errorf("parse tag id error: %w", err)
+		}
+
+		tagIDs[index] = tagUUID
+	}
+
 	return usecase.ListKolsParam{
 		Email:    r.Email,
 		Name:     r.Name,
 		Tag:      r.Tag,
+		TagIDs:   tagIDs,
 		Sex:      r.Sex,
 		Page:     r.PageIndex,
 		PageSize: r.PageSize,
-	}
+	}, nil
 }
 
 type ListKolsResponse struct {

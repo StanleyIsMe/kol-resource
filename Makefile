@@ -57,6 +57,8 @@ vuln-scan: ## scan for vulnerability issues with govulncheck (govulncheck binary
 # sql #
 #######
 
+APP_NAME_UND=$(shell echo "$(PROJECT_NAME)" | tr '-' '_')
+
 sqlboiler:
 	@( \
 	printf "Enter pass for db: "; read -s DB_PASSWORD && \

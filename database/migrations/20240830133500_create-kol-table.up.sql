@@ -9,6 +9,7 @@ CREATE TABLE "kol" (
     "email" varchar(50) NOT NULL,
     "description" text NOT NULL,
     "sex" sex NOT NULL,
+    "social_media" varchar(255) NOT NULL,
     "enable" bool NOT NULL,
     "updated_admin_id" uuid NOT NULL,
     "created_at" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,

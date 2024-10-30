@@ -1,1 +1,3 @@
 ./dockercompose/psql/
+
+./dockercompose/psql

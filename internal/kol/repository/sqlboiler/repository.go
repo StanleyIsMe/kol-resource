@@ -61,6 +61,7 @@ func (repo *KolRepository) CreateKol(ctx context.Context, param domain.CreateKol
 		Name:           param.Name,
 		Email:          param.Email,
 		Description:    param.Description,
+		SocialMedia:    param.SocialMedia,
 		Sex:            model.Sex(param.Sex),
 		Enable:         param.Enable,
 		UpdatedAdminID: param.UpdatedAdminID.String(),
@@ -115,6 +116,7 @@ func (repo *KolRepository) UpdateKol(ctx context.Context, param domain.UpdateKol
 	kolModel.Name = param.Name
 	kolModel.Email = param.Email
 	kolModel.Description = param.Description
+	kolModel.SocialMedia = param.SocialMedia
 	kolModel.Sex = model.Sex(param.Sex)
 	kolModel.Enable = param.Enable
 	kolModel.UpdatedAdminID = param.UpdatedAdminID.String()
@@ -279,33 +281,63 @@ func (repo *KolRepository) ListKolsByIDs(ctx context.Context, ids []uuid.UUID) (
 func (repo *KolRepository) ListKolWithTagsByFilters(ctx context.Context, param domain.ListKolWithTagsByFiltersParams) ([]*domain.Kol, int, error) {
 	var kolWithTags []KolWithTags
 
-	query := []qm.QueryMod{
-		qm.Select("kol.*", "tag.name as tag", "tag.id as tag_id"),
-		qm.From("kol"),
-		qm.InnerJoin("kol_tag ON kol_tag.kol_id = kol.id"),
-		qm.InnerJoin("tag ON tag.id = kol_tag.tag_id"),
-		qm.Limit(param.PageSize),
-		qm.Offset((param.Page - 1) * param.PageSize),
+	// due to the sqlboiler was not friendly for sub query, we need to use sub query to get kol ids first
+	subQuery := []qm.QueryMod{
+		qm.Select("kol.id as id"),
+		qm.LeftOuterJoin("kol_tag ON kol_tag.kol_id = kol.id"),
+		qm.LeftOuterJoin("tag ON tag.id = kol_tag.tag_id"),
+	}
+
+	if len(param.TagIDs) > 0 {
+		tagIDs := make([]interface{}, len(param.TagIDs))
+		for index, tagID := range param.TagIDs {
+			tagIDs[index] = tagID.String()
+		}
+
+		subQuery = append(subQuery, qm.WhereIn("tag.id IN ?", tagIDs...))
 	}
 
 	if param.Tag != nil {
-		query = append(query, qm.Where("tag.name LIKE ?", "%"+*param.Tag+"%"))
+		subQuery = append(subQuery, qm.Where("tag.name LIKE ?", "%"+*param.Tag+"%"))
 	}
 
 	if param.Sex != nil {
-		query = append(query, qm.Where("kol.sex = ?", *param.Sex))
+		subQuery = append(subQuery, qm.Where("kol.sex = ?", *param.Sex))
 	}
 
 	if param.Email != nil {
-		query = append(query, qm.Where("kol.email LIKE ?", "%"+*param.Email+"%"))
+		subQuery = append(subQuery, qm.Where("kol.email LIKE ?", "%"+*param.Email+"%"))
 	}
 
 	if param.Name != nil {
-		query = append(query, qm.Where("kol.name LIKE ?", "%"+*param.Name+"%"))
+		subQuery = append(subQuery, qm.Where("kol.name LIKE ?", "%"+*param.Name+"%"))
 	}
 
-	err := model.NewQuery(query...).Bind(ctx, repo.db, &kolWithTags)
+	subQuery = append(subQuery,
+		qm.GroupBy("kol.id"),
+		qm.Limit(param.PageSize),
+		qm.Offset((param.Page-1)*param.PageSize),
+	)
+
+	subKols, err := model.Kols(subQuery...).All(ctx, repo.db)
 	if err != nil {
+		return nil, 0, domain.QueryRecordError{Err: err}
+	}
+
+	subQueryKolIDs := make([]interface{}, len(subKols))
+	for index, kol := range subKols {
+		subQueryKolIDs[index] = kol.ID
+	}
+
+	mainQuery := []qm.QueryMod{
+		qm.Select("kol.*", "tag.name as tag", "tag.id as tag_id"),
+		qm.From("kol"),
+		qm.LeftOuterJoin("kol_tag ON kol_tag.kol_id = kol.id"),
+		qm.LeftOuterJoin("tag ON tag.id = kol_tag.tag_id"),
+		qm.WhereIn("kol.id IN ?", subQueryKolIDs...),
+	}
+
+	if err := model.NewQuery(mainQuery...).Bind(ctx, repo.db, &kolWithTags); err != nil {
 		return nil, 0, domain.QueryRecordError{Err: err}
 	}
 
@@ -330,11 +362,19 @@ func (repo *KolRepository) countKolWithTagsByFilters(ctx context.Context, param 
 	var count Count
 
 	query := []qm.QueryMod{
-		qm.Select("count(*) as count"),
+		qm.Select("count(distinct kol.id) as count"),
 		qm.From("kol"),
-		qm.InnerJoin("kol_tag ON kol_tag.kol_id = kol.id"),
-		qm.InnerJoin("tag ON tag.id = kol_tag.tag_id"),
-		qm.GroupBy("kol.id"),
+		qm.LeftOuterJoin("kol_tag ON kol_tag.kol_id = kol.id"),
+		qm.LeftOuterJoin("tag ON tag.id = kol_tag.tag_id"),
+	}
+
+	if len(param.TagIDs) > 0 {
+		tagIDs := make([]interface{}, len(param.TagIDs))
+		for index, tagID := range param.TagIDs {
+			tagIDs[index] = tagID.String()
+		}
+
+		query = append(query, qm.WhereIn("tag.id IN ?", tagIDs...))
 	}
 
 	if param.Tag != nil {
@@ -684,6 +724,7 @@ func (repo *KolRepository) newKolFromModel(kolModel *model.Kol) (*entities.Kol, 
 		Name:           kolModel.Name,
 		Email:          kolModel.Email,
 		Description:    kolModel.Description,
+		SocialMedia:    kolModel.SocialMedia,
 		Sex:            sex,
 		Enable:         kolModel.Enable,
 		UpdatedAdminID: updateAdminUUID,

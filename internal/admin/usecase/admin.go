@@ -95,10 +95,6 @@ func (a *AdminUseCaseImpl) Login(ctx context.Context, userName string, password 
 	}, nil
 }
 
-const (
-	signKey = "kolresourceKey"
-)
-
 func (a *AdminUseCaseImpl) generateJWT(adminID uuid.UUID, adminName string) (string, error) {
 	claims := JWTAdminClaims{
 		adminID,

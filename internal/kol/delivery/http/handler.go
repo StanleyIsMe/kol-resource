@@ -105,9 +105,18 @@ func (h *KolHandler) ListKols(c *gin.Context) {
 	var req ListKolsRequest
 	if err := c.ShouldBindQuery(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": errors.New("invalid request")})
+
+		return
 	}
 
-	kols, total, err := h.uc.ListKols(ctx, req.ToUsecaseParam())
+	ucParam, err := req.ToUsecaseParam()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+
+		return
+	}
+
+	kols, total, err := h.uc.ListKols(ctx, ucParam)
 	if err != nil {
 		zerolog.Ctx(ctx).Error().Fields(map[string]any{
 			"payload": fmt.Sprintf("%+v", req),
