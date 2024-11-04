@@ -27,14 +27,13 @@ func (repo *EmailRepository) SendEmail(ctx context.Context, param domain.SendEma
 		return fmt.Errorf("failed to dial mail server: %w", err)
 	}
 
-
 	mailMsg := gomail.NewMessage()
 	for _, toEmail := range param.ToEmails {
 		mailMsg.SetHeader("From", param.AdminEmail)
 		mailMsg.SetAddressHeader("To", toEmail.Email, toEmail.Name)
 		mailMsg.SetHeader("Subject", param.Subject)
 		mailMsg.SetHeader("To", toEmail.Email)
-		mailContent := fmt.Sprintf("Hello %s, \n\n %s", toEmail.Name, param.Body)
+		mailContent := fmt.Sprintf("您好 %s, \n\n %s", toEmail.Name, param.Body)
 		mailMsg.SetBody("text/html", mailContent)
 
 		if err := gomail.Send(sendCloser, mailMsg); err != nil {
