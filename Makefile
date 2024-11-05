@@ -1,4 +1,4 @@
-.PHONY: help test test-race test-leak bench bench-compare lint sec-scan 
+.PHONY: help test test-race test-leak bench bench-compare lint sec-scan build
 
 help: ## show this help
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z0-9_-]+:.*?## / {sub("\\\\n",sprintf("\n%22c"," "), $$2);printf "\033[36m%-25s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -93,4 +93,18 @@ gen-migrate-sql:
 	)
 
 
+#########
+# build #
+#########
 
+build:
+	docker buildx build \
+	-f Dockerfile \
+	-t $(PROJECT_NAME) \
+	--platform linux/amd64 \
+	--build-arg GLOBAL_VAR_PKG=server \
+	--build-arg LAST_MAIN_COMMIT_HASH=$(shell git rev-parse HEAD) \
+	--build-arg LAST_MAIN_COMMIT_TIME=$(shell git log main -n1 --format='%cd' --date='iso-strict') \
+	--progress=plain \
+	--load \
+	./
