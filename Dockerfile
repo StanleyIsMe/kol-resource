@@ -10,6 +10,16 @@ WORKDIR /src
 
 COPY ./go.mod ./go.sum ./
 
+# install storage.googleapis.com certs
+RUN apt-get update && apt-get install -y ca-certificates openssl
+
+# Get certificate from "storage.googleapis.com"
+RUN openssl s_client -showcerts -connect storage.googleapis.com:443 </dev/null 2>/dev/null| openssl x509 -outform PEM >  \
+    /usr/local/share/ca-certificates/googleapis.crt
+
+# Update certificates
+RUN update-ca-certificates
+
 RUN go mod download
 
 ###########
@@ -47,6 +57,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
 FROM scratch AS final
 
 COPY --from=builder /etc/passwd /etc/passwd
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
 ARG BINARY_NAME 
 

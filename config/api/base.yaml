@@ -22,3 +22,11 @@ custom:
     maxConns: 10
     maxIdleConns: 5
     maxLifeTime: 1h
+  email:
+    adminEmail: 
+    adminPass:
+    serverHost:
+    serverPort:
+  auth:
+    jwtKey:
+    jwtExp:
