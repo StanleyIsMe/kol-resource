@@ -29,7 +29,7 @@ func (a *API) registerHTTPSvc(_ context.Context, dbStdConn *sql.DB) {
 	adminUseCase := adminUseCase.NewAdminUseCaseImpl(adminRepository, a.cfg)
 
 	kolRepository := kolRepo.NewKolRepository(dbStdConn)
-	emailRepository := emailRepo.NewEmailRepository(a.cfg.CustomConfig.Email.ServerHost, a.cfg.CustomConfig.Email.ServerPort)
+	emailRepository := emailRepo.NewEmailRepository(a.cfg)
 	kolUseCase := kolUseCase.NewKolUseCaseImpl(kolRepository, emailRepository, a.cfg)
 
 	httpRouter.Use(

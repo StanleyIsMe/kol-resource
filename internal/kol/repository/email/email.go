@@ -3,25 +3,25 @@ package email
 import (
 	"context"
 	"fmt"
+	apiCfg "kolresource/internal/api/config"
 	"kolresource/internal/kol/domain"
+	"kolresource/pkg/config"
 
 	"gopkg.in/gomail.v2"
 )
 
 type EmailRepository struct {
-	mailServerHost string
-	mailServerPort int
+	cfg *config.Config[apiCfg.Config]
 }
 
-func NewEmailRepository(mailServerHost string, mailServerPort int) *EmailRepository {
+func NewEmailRepository(cfg *config.Config[apiCfg.Config]) *EmailRepository {
 	return &EmailRepository{
-		mailServerHost: mailServerHost,
-		mailServerPort: mailServerPort,
+		cfg: cfg,
 	}
 }
 
 func (repo *EmailRepository) SendEmail(ctx context.Context, param domain.SendEmailParams) error {
-	dialer := gomail.NewDialer(repo.mailServerHost, repo.mailServerPort, param.AdminEmail, param.AdminPass)
+	dialer := gomail.NewDialer(repo.cfg.CustomConfig.Email.ServerHost, repo.cfg.CustomConfig.Email.ServerPort, param.AdminEmail, param.AdminPass)
 	sendCloser, err := dialer.Dial()
 	if err != nil {
 		return fmt.Errorf("failed to dial mail server: %w", err)
@@ -29,7 +29,7 @@ func (repo *EmailRepository) SendEmail(ctx context.Context, param domain.SendEma
 
 	mailMsg := gomail.NewMessage()
 	for _, toEmail := range param.ToEmails {
-		mailMsg.SetHeader("From", param.AdminEmail)
+		mailMsg.SetHeader("From", mailMsg.FormatAddress(param.AdminEmail, repo.cfg.CustomConfig.Email.AdminName))
 		mailMsg.SetAddressHeader("To", toEmail.Email, toEmail.Name)
 		mailMsg.SetHeader("Subject", param.Subject)
 		mailMsg.SetHeader("To", toEmail.Email)

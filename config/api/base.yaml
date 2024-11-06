@@ -25,6 +25,7 @@ custom:
   email:
     adminEmail: 
     adminPass:
+    adminName:
     serverHost:
     serverPort:
   auth:

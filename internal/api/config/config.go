@@ -24,6 +24,7 @@ type Database struct {
 type Email struct {
 	AdminEmail string `yaml:"adminEmail" json:"adminEmail"`
 	AdminPass  string `yaml:"adminPass" json:"adminPass"`
+	AdminName  string `yaml:"adminName" json:"adminName"`
 	ServerHost string `yaml:"serverHost" json:"serverHost"`
 	ServerPort int    `yaml:"serverPort" json:"serverPort"`
 }
