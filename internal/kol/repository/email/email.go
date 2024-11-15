@@ -27,7 +27,7 @@ func (repo *EmailRepository) SendEmail(ctx context.Context, param domain.SendEma
 		return fmt.Errorf("failed to dial mail server: %w", err)
 	}
 
-	mailMsg := gomail.NewMessage()
+	mailMsg := gomail.NewMessage(gomail.SetEncoding(gomail.Base64))
 	for _, toEmail := range param.ToEmails {
 		mailMsg.SetHeader("From", mailMsg.FormatAddress(param.AdminEmail, repo.cfg.CustomConfig.Email.AdminName))
 		mailMsg.SetAddressHeader("To", toEmail.Email, toEmail.Name)
