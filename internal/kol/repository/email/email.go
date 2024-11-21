@@ -21,7 +21,12 @@ func NewRepository(cfg *config.Config[apiCfg.Config]) *Repository {
 }
 
 func (repo *Repository) SendEmail(_ context.Context, param domain.SendEmailParams) error {
-	dialer := gomail.NewDialer(repo.cfg.CustomConfig.Email.ServerHost, repo.cfg.CustomConfig.Email.ServerPort, param.AdminEmail, param.AdminPass)
+	dialer := gomail.NewDialer(
+		repo.cfg.CustomConfig.Email.ServerHost,
+		repo.cfg.CustomConfig.Email.ServerPort,
+		repo.cfg.CustomConfig.Email.AdminEmail,
+		repo.cfg.CustomConfig.Email.AdminPass,
+	)
 	sendCloser, err := dialer.Dial()
 	if err != nil {
 		return fmt.Errorf("failed to dial mail server: %w", err)
@@ -29,7 +34,7 @@ func (repo *Repository) SendEmail(_ context.Context, param domain.SendEmailParam
 
 	mailMsg := gomail.NewMessage(gomail.SetEncoding(gomail.Base64))
 	for _, toEmail := range param.ToEmails {
-		mailMsg.SetHeader("From", mailMsg.FormatAddress(param.AdminEmail, repo.cfg.CustomConfig.Email.AdminName))
+		mailMsg.SetHeader("From", mailMsg.FormatAddress(repo.cfg.CustomConfig.Email.AdminEmail, repo.cfg.CustomConfig.Email.AdminName))
 		mailMsg.SetAddressHeader("To", toEmail.Email, toEmail.Name)
 		mailMsg.SetHeader("Subject", param.Subject)
 		mailMsg.SetHeader("To", toEmail.Email)

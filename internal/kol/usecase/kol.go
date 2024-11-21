@@ -4,10 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	apiCfg "kolresource/internal/api/config"
+
 	"kolresource/internal/kol/domain"
 	"kolresource/internal/kol/domain/entities"
-	"kolresource/pkg/config"
 
 	"github.com/google/uuid"
 )
@@ -15,11 +14,10 @@ import (
 type KolUseCaseImpl struct {
 	repo      domain.Repository
 	emailRepo domain.EmailRepository
-	cfg       *config.Config[apiCfg.Config]
 }
 
-func NewKolUseCaseImpl(repo domain.Repository, emailRepo domain.EmailRepository, cfg *config.Config[apiCfg.Config]) *KolUseCaseImpl {
-	return &KolUseCaseImpl{repo: repo, emailRepo: emailRepo, cfg: cfg}
+func NewKolUseCaseImpl(repo domain.Repository, emailRepo domain.EmailRepository) *KolUseCaseImpl {
+	return &KolUseCaseImpl{repo: repo, emailRepo: emailRepo}
 }
 
 // CreateKol is responsible for creating a new kol.
@@ -252,11 +250,9 @@ func (uc *KolUseCaseImpl) SendEmail(ctx context.Context, param SendEmailParam) e
 	}
 
 	sendEmailParams := domain.SendEmailParams{
-		AdminEmail: uc.cfg.CustomConfig.Email.AdminEmail,
-		AdminPass:  uc.cfg.CustomConfig.Email.AdminPass,
-		Subject:    param.Subject,
-		Body:       param.EmailContent,
-		ToEmails:   make([]domain.ToEmail, 0, len(kols)),
+		Subject:  param.Subject,
+		Body:     param.EmailContent,
+		ToEmails: make([]domain.ToEmail, 0, len(kols)),
 	}
 
 	for _, kol := range kols {

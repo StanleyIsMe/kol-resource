@@ -30,7 +30,7 @@ func (a *API) registerHTTPSvc(_ context.Context, dbStdConn *sql.DB) {
 
 	kolRepository := kolRepo.NewKolRepository(dbStdConn)
 	emailRepository := email.NewRepository(a.cfg)
-	kolUseCase := kolUseCase.NewKolUseCaseImpl(kolRepository, emailRepository, a.cfg)
+	kolUseCase := kolUseCase.NewKolUseCaseImpl(kolRepository, emailRepository)
 
 	httpRouter.Use(
 		middleware.Cors(),

@@ -108,8 +108,6 @@ type CreateSendEmailLogParams struct {
 }
 
 type SendEmailParams struct {
-	AdminEmail string
-	AdminPass  string
 	Subject    string
 	Body       string
 	ToEmails   []ToEmail
