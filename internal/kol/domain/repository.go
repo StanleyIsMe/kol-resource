@@ -108,9 +108,9 @@ type CreateSendEmailLogParams struct {
 }
 
 type SendEmailParams struct {
-	Subject    string
-	Body       string
-	ToEmails   []ToEmail
+	Subject  string
+	Body     string
+	ToEmails []ToEmail
 }
 
 type ToEmail struct {
