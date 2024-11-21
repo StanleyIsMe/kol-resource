@@ -5,13 +5,6 @@ import (
 	"net/http"
 )
 
-type UseCaseError interface {
-	ErrorCode() string
-	ErrorMsg() string
-	Error() string
-	HTTPStatusCode() int
-}
-
 type DuplicatedResourceError struct {
 	name     string
 	resource string

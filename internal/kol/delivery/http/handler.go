@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"kolresource/internal/kol/usecase"
+	"kolresource/pkg/business"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -35,7 +36,7 @@ func (h *KolHandler) CreateKol(c *gin.Context) {
 			"error":   err,
 		}).Msg("kol create error")
 
-		c.JSON(UseCaesErrorToErrorResp(err))
+		c.JSON(business.UseCaesErrorToErrorResp(err))
 
 		return
 	}
@@ -66,7 +67,7 @@ func (h *KolHandler) UpdateKol(c *gin.Context) {
 			"error":   err,
 		}).Msg("kol update error")
 
-		c.JSON(UseCaesErrorToErrorResp(err))
+		c.JSON(business.UseCaesErrorToErrorResp(err))
 
 		return
 	}
@@ -91,7 +92,7 @@ func (h *KolHandler) GetKolByID(c *gin.Context) {
 			"error":   err,
 		}).Msg("kol get by id error")
 
-		c.JSON(UseCaesErrorToErrorResp(err))
+		c.JSON(business.UseCaesErrorToErrorResp(err))
 
 		return
 	}
@@ -123,7 +124,7 @@ func (h *KolHandler) ListKols(c *gin.Context) {
 			"error":   err,
 		}).Msg("kol search error")
 
-		c.JSON(UseCaesErrorToErrorResp(err))
+		c.JSON(business.UseCaesErrorToErrorResp(err))
 
 		return
 	}
@@ -153,7 +154,7 @@ func (h *KolHandler) CreateTag(c *gin.Context) {
 			"error":   err,
 		}).Msg("tag create error")
 
-		c.JSON(UseCaesErrorToErrorResp(err))
+		c.JSON(business.UseCaesErrorToErrorResp(err))
 
 		return
 	}
@@ -173,7 +174,7 @@ func (h *KolHandler) ListTags(c *gin.Context) {
 			"error":   err,
 		}).Msg("tag search error")
 
-		c.JSON(UseCaesErrorToErrorResp(err))
+		c.JSON(business.UseCaesErrorToErrorResp(err))
 
 		return
 	}
@@ -197,7 +198,7 @@ func (h *KolHandler) CreateProduct(c *gin.Context) {
 			"error":   err,
 		}).Msg("product create error")
 
-		c.JSON(UseCaesErrorToErrorResp(err))
+		c.JSON(business.UseCaesErrorToErrorResp(err))
 
 		return
 	}
@@ -217,7 +218,7 @@ func (h *KolHandler) ListProducts(c *gin.Context) {
 			"error":   err,
 		}).Msg("product search error")
 
-		c.JSON(UseCaesErrorToErrorResp(err))
+		c.JSON(business.UseCaesErrorToErrorResp(err))
 
 		return
 	}
@@ -241,7 +242,7 @@ func (h *KolHandler) SendEmail(c *gin.Context) {
 			"error":   err,
 		}).Msg("email send error")
 
-		c.JSON(UseCaesErrorToErrorResp(err))
+		c.JSON(business.UseCaesErrorToErrorResp(err))
 
 		return
 	}
