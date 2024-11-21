@@ -68,7 +68,7 @@ func New(conf *Config, opts ...Option) (*PostgreInit, error) {
 		opt(pgi)
 	}
 
-	pgi.pgxConf.AfterConnect = func(ctx context.Context, conn *pgx.Conn) error {
+	pgi.pgxConf.AfterConnect = func(_ context.Context, conn *pgx.Conn) error {
 		pgxUUID.Register(conn.TypeMap())
 
 		return nil

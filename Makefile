@@ -38,7 +38,7 @@ bench-compare: ## compare benchs results
 ########
 
 lint: ## lints the entire codebase
-	@golangci-lint run ./... --config=./.golangci.toml
+	@golangci-lint run ./... --config=./.golangci.yaml
 
 #######
 # sec #

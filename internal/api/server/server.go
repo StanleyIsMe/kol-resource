@@ -32,7 +32,7 @@ func NewServer(cfg *config.Config[apiCfg.Config], logger *zerolog.Logger) *Serve
 	return srv
 }
 
-func (s *Server) Start(ctx context.Context) error {
+func (s *Server) Start(_ context.Context) error {
 	s.logger.Info().
 		Str("commitTime", CommitTime).
 		Str("commitHash", CommitHash).

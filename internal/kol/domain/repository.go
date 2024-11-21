@@ -8,6 +8,8 @@ import (
 	"github.com/google/uuid"
 )
 
+//go:generate mockgen -source=./repository.go -destination=../mock/repositorymock/repository_mock.go -package=repositorymock
+//nolint:interfacebloat
 type Repository interface {
 	GetKolByID(ctx context.Context, id uuid.UUID) (*entities.Kol, error)
 	GetKolByEmail(ctx context.Context, email string) (*entities.Kol, error)
@@ -106,8 +108,6 @@ type CreateSendEmailLogParams struct {
 }
 
 type SendEmailParams struct {
-	AdminEmail string
-	AdminPass  string
 	Subject    string
 	Body       string
 	ToEmails   []ToEmail

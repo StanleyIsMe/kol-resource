@@ -16,6 +16,12 @@ import (
 	"github.com/google/uuid"
 )
 
+const (
+	defaultSaltLen = 32
+	defaultMemory  = 64 * 1024
+	defaultKeyLen  = 128
+)
+
 type AdminUseCaseImpl struct {
 	adminRepo domain.Repository
 	cfg       *config.Config[apiCfg.Config]
@@ -25,7 +31,7 @@ func NewAdminUseCaseImpl(adminRepo domain.Repository, cfg *config.Config[apiCfg.
 	return &AdminUseCaseImpl{adminRepo: adminRepo, cfg: cfg}
 }
 
-// Register is responsible for registering a new admin user.
+// Register is responsible for creating a new admin user.
 func (a *AdminUseCaseImpl) Register(ctx context.Context, param RegisterParams) error {
 	existAdmin, err := a.adminRepo.GetAdminByUserName(ctx, param.UserName)
 	if err != nil && !errors.Is(err, domain.ErrDataNotFound) {
@@ -36,7 +42,7 @@ func (a *AdminUseCaseImpl) Register(ctx context.Context, param RegisterParams) e
 		return DumplicatedUsernameError{username: param.UserName}
 	}
 
-	argon2IDHash := NewArgon2idHash(1, 32, 64*1024, 1, 128)
+	argon2IDHash := NewArgon2idHash(1, defaultSaltLen, defaultMemory, 1, defaultKeyLen)
 
 	hashSalt, err := argon2IDHash.GenerateHash([]byte(param.Password), nil)
 	if err != nil {
@@ -57,7 +63,7 @@ func (a *AdminUseCaseImpl) Register(ctx context.Context, param RegisterParams) e
 	return nil
 }
 
-// Login is responsible for logging in an admin user.
+// Login is responsible for admin login.
 func (a *AdminUseCaseImpl) Login(ctx context.Context, userName string, password string) (*LoginResponse, error) {
 	adminEntity, err := a.adminRepo.GetAdminByUserName(ctx, userName)
 	if err != nil {
@@ -68,7 +74,7 @@ func (a *AdminUseCaseImpl) Login(ctx context.Context, userName string, password 
 		return nil, InternalServerError{err: fmt.Errorf("adminRepo.GetAdminByUserName error: %w", err)}
 	}
 
-	argon2IDHash := NewArgon2idHash(1, 32, 64*1024, 1, 128)
+	argon2IDHash := NewArgon2idHash(1, defaultSaltLen, defaultMemory, 1, defaultKeyLen)
 
 	hash, err := base64.StdEncoding.DecodeString(adminEntity.Password)
 	if err != nil {
@@ -119,8 +125,9 @@ func (a *AdminUseCaseImpl) generateJWT(adminID uuid.UUID, adminName string) (str
 	return jwtToken, nil
 }
 
-func (a *AdminUseCaseImpl) LoginTokenParser(ctx context.Context, tokenString string) (*JWTAdminClaims, error) {
-	token, err := jwt.ParseWithClaims(tokenString, &JWTAdminClaims{}, func(token *jwt.Token) (interface{}, error) {
+// LoginTokenParser is responsible for parsing the JWT token for admin login.
+func (a *AdminUseCaseImpl) LoginTokenParser(_ context.Context, tokenString string) (*JWTAdminClaims, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &JWTAdminClaims{}, func(_ *jwt.Token) (interface{}, error) {
 		return []byte(a.cfg.CustomConfig.Auth.JWTKey), nil
 	})
 

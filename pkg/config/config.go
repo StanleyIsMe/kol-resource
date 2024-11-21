@@ -9,7 +9,7 @@ import (
 )
 
 // LoadWithEnv loads the configuration from the given path.
-func LoadWithEnv[CustomConfigT any](ctx context.Context, configPath string) (*Config[CustomConfigT], error) {
+func LoadWithEnv[CustomConfigT any](_ context.Context, configPath string) (*Config[CustomConfigT], error) {
 	var cfg Config[CustomConfigT]
 
 	currEnv := "local"

@@ -1,8 +1,7 @@
-package http
+package business
 
 import (
 	"errors"
-	"kolresource/internal/admin/usecase"
 	"net/http"
 )
 
@@ -12,7 +11,7 @@ type ErrorResponse struct {
 }
 
 func UseCaesErrorToErrorResp(err error) (int, ErrorResponse) {
-	var usecaseErr usecase.UseCaseError
+	var usecaseErr UseCaseError
 	if !errors.As(err, &usecaseErr) {
 		return http.StatusInternalServerError, ErrorResponse{
 			ErrorCode:    "INTERNAL_SERVER_ERROR",
@@ -25,5 +24,3 @@ func UseCaesErrorToErrorResp(err error) (int, ErrorResponse) {
 		ErrorMessage: usecaseErr.ErrorMsg(),
 	}
 }
-
-

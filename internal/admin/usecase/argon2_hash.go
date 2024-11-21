@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/rand"
 	"errors"
+	"fmt"
 
 	"golang.org/x/crypto/argon2"
 )
@@ -54,7 +55,7 @@ func (a *Argon2idHash) GenerateHash(password, salt []byte) (*HashSalt, error) {
 		salt, err = randomSecret(a.saltLen)
 	}
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("randomSecret error: %w", err)
 	}
 	// Generate hash
 	hash := argon2.IDKey(password, salt, a.time, a.memory, a.threads, a.keyLen)
@@ -67,7 +68,7 @@ func (a *Argon2idHash) Compare(hash, salt, password []byte) error {
 	// Generate hash for comparison.
 	hashSalt, err := a.GenerateHash(password, salt)
 	if err != nil {
-		return err
+		return fmt.Errorf("GenerateHash error: %w", err)
 	}
 	// Compare the generated hash with the stored hash.
 	// If they don't match return error.
@@ -83,7 +84,7 @@ func randomSecret(length uint32) ([]byte, error) {
 
 	_, err := rand.Read(secret)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("rand.Read error: %w", err)
 	}
 
 	return secret, nil

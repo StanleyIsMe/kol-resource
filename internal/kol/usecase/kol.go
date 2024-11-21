@@ -4,10 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	apiCfg "kolresource/internal/api/config"
+
 	"kolresource/internal/kol/domain"
 	"kolresource/internal/kol/domain/entities"
-	"kolresource/pkg/config"
 
 	"github.com/google/uuid"
 )
@@ -15,13 +14,13 @@ import (
 type KolUseCaseImpl struct {
 	repo      domain.Repository
 	emailRepo domain.EmailRepository
-	cfg       *config.Config[apiCfg.Config]
 }
 
-func NewKolUseCaseImpl(repo domain.Repository, emailRepo domain.EmailRepository, cfg *config.Config[apiCfg.Config]) KolUseCase {
-	return &KolUseCaseImpl{repo: repo, emailRepo: emailRepo, cfg: cfg}
+func NewKolUseCaseImpl(repo domain.Repository, emailRepo domain.EmailRepository) *KolUseCaseImpl {
+	return &KolUseCaseImpl{repo: repo, emailRepo: emailRepo}
 }
 
+// CreateKol is responsible for creating a new kol.
 func (uc *KolUseCaseImpl) CreateKol(ctx context.Context, param CreateKolParam) error {
 	existKol, err := uc.repo.GetKolByEmail(ctx, param.Email)
 	if err != nil && !errors.Is(err, domain.ErrDataNotFound) {
@@ -81,6 +80,7 @@ func (uc *KolUseCaseImpl) GetKolByID(ctx context.Context, kolID uuid.UUID) (*Kol
 	return kol, nil
 }
 
+// UpdateKol is responsible for updating a kol.
 func (uc *KolUseCaseImpl) UpdateKol(ctx context.Context, param UpdateKolParam) error {
 	updateKolParams := domain.UpdateKolParams{
 		ID:             param.KolID,
@@ -104,6 +104,7 @@ func (uc *KolUseCaseImpl) UpdateKol(ctx context.Context, param UpdateKolParam) e
 	return nil
 }
 
+// ListKols is responsible for searching multiple kols by dynamic filters.
 func (uc *KolUseCaseImpl) ListKols(ctx context.Context, param ListKolsParam) ([]*Kol, int, error) {
 	kolAggregates, total, err := uc.repo.ListKolWithTagsByFilters(ctx, domain.ListKolWithTagsByFiltersParams{
 		Email:    param.Email,
@@ -144,6 +145,7 @@ func (uc *KolUseCaseImpl) ListKols(ctx context.Context, param ListKolsParam) ([]
 	return kols, total, nil
 }
 
+// CreateTag is responsible for creating a new tag.
 func (uc *KolUseCaseImpl) CreateTag(ctx context.Context, param CreateTagParam) error {
 	existTag, err := uc.repo.GetTagByName(ctx, param.Name)
 	if err != nil && !errors.Is(err, domain.ErrDataNotFound) {
@@ -166,6 +168,7 @@ func (uc *KolUseCaseImpl) CreateTag(ctx context.Context, param CreateTagParam) e
 	return nil
 }
 
+// ListTagsByName is responsible for searching multiple tags by name.
 func (uc *KolUseCaseImpl) ListTagsByName(ctx context.Context, name string) ([]*Tag, error) {
 	tagEntities, err := uc.repo.ListTagsByName(ctx, name)
 	if err != nil {
@@ -183,6 +186,7 @@ func (uc *KolUseCaseImpl) ListTagsByName(ctx context.Context, name string) ([]*T
 	return tags, nil
 }
 
+// CreateProduct is responsible for creating a new product.
 func (uc *KolUseCaseImpl) CreateProduct(ctx context.Context, param CreateProductParam) error {
 	existProduct, err := uc.repo.GetProductByName(ctx, param.Name)
 	if err != nil && !errors.Is(err, domain.ErrDataNotFound) {
@@ -206,6 +210,7 @@ func (uc *KolUseCaseImpl) CreateProduct(ctx context.Context, param CreateProduct
 	return nil
 }
 
+// ListProductsByName is responsible for searching multiple products by name.
 func (uc *KolUseCaseImpl) ListProductsByName(ctx context.Context, name string) ([]*Product, error) {
 	productEntities, err := uc.repo.ListProductsByName(ctx, name)
 	if err != nil {
@@ -224,6 +229,7 @@ func (uc *KolUseCaseImpl) ListProductsByName(ctx context.Context, name string) (
 	return products, nil
 }
 
+// SendEmail is responsible for sending an email to multiple kols.
 func (uc *KolUseCaseImpl) SendEmail(ctx context.Context, param SendEmailParam) error {
 	product, err := uc.repo.GetProductByID(ctx, param.ProductID)
 	if err != nil {
@@ -244,11 +250,9 @@ func (uc *KolUseCaseImpl) SendEmail(ctx context.Context, param SendEmailParam) e
 	}
 
 	sendEmailParams := domain.SendEmailParams{
-		AdminEmail: uc.cfg.CustomConfig.Email.AdminEmail,
-		AdminPass:  uc.cfg.CustomConfig.Email.AdminPass,
-		Subject:    param.Subject,
-		Body:       param.EmailContent,
-		ToEmails:   make([]domain.ToEmail, 0, len(kols)),
+		Subject:  param.Subject,
+		Body:     param.EmailContent,
+		ToEmails: make([]domain.ToEmail, 0, len(kols)),
 	}
 
 	for _, kol := range kols {

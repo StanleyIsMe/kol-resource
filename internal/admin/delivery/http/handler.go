@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"kolresource/internal/admin/usecase"
+	"kolresource/pkg/business"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -38,7 +39,7 @@ func (h *AdminHandler) Register(c *gin.Context) {
 			"error":   err,
 		}).Msg("admin register error")
 
-		c.JSON(UseCaesErrorToErrorResp(err))
+		c.JSON(business.UseCaesErrorToErrorResp(err))
 
 		return
 	}
@@ -63,7 +64,7 @@ func (h *AdminHandler) Login(c *gin.Context) {
 			"error":   err,
 		}).Msg("admin login error")
 
-		c.JSON(UseCaesErrorToErrorResp(err))
+		c.JSON(business.UseCaesErrorToErrorResp(err))
 
 		return
 	}

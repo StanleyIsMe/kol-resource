@@ -12,7 +12,7 @@ import (
 )
 
 // GinTimeout is wrap Timeout for compatibility with gin.
-func GinTimeout(logger *zerolog.Logger, timeout time.Duration) gin.HandlerFunc {
+func GinTimeout(timeout time.Duration) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx := c.Request.Context()
 		newCtx, cancelCtx := context.WithTimeout(ctx, timeout)

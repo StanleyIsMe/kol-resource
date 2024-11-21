@@ -76,7 +76,7 @@ func (repo *KolRepository) CreateKol(ctx context.Context, param domain.CreateKol
 
 	defer func() {
 		if txErr != nil {
-			tx.Rollback()
+			tx.Rollback() //nolint:errcheck
 		}
 	}()
 
@@ -130,7 +130,7 @@ func (repo *KolRepository) UpdateKol(ctx context.Context, param domain.UpdateKol
 
 	defer func() {
 		if txErr != nil {
-			tx.Rollback()
+			tx.Rollback() //nolint:errcheck
 		}
 	}()
 
@@ -185,7 +185,7 @@ func (repo *KolRepository) DeleteKolByID(ctx context.Context, id uuid.UUID) erro
 
 	defer func() {
 		if txErr != nil {
-			tx.Rollback()
+			tx.Rollback() //nolint:errcheck
 		}
 	}()
 
