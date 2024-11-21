@@ -44,7 +44,7 @@ func (a *API) Start(ctx context.Context) error {
 		boil.DebugMode = true
 	}
 
-	a.shutdownHandler.Add("pgStdConn", func(ctx context.Context) error {
+	a.shutdownHandler.Add("pgStdConn", func(_ context.Context) error {
 		return pgStdConn.Close()
 	})
 

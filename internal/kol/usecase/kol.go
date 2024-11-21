@@ -18,7 +18,7 @@ type KolUseCaseImpl struct {
 	cfg       *config.Config[apiCfg.Config]
 }
 
-func NewKolUseCaseImpl(repo domain.Repository, emailRepo domain.EmailRepository, cfg *config.Config[apiCfg.Config]) KolUseCase {
+func NewKolUseCaseImpl(repo domain.Repository, emailRepo domain.EmailRepository, cfg *config.Config[apiCfg.Config]) *KolUseCaseImpl {
 	return &KolUseCaseImpl{repo: repo, emailRepo: emailRepo, cfg: cfg}
 }
 

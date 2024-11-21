@@ -1,10 +1,9 @@
-package sqlboiler
+package repository
 
 import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 	"kolresource/internal/admin/domain"
 	"kolresource/internal/admin/domain/entities"
 	model "kolresource/internal/db/sqlboiler"
@@ -49,9 +48,6 @@ func (r *AdminRepository) CreateAdmin(ctx context.Context, adminEntity *entities
 		Salt:     adminEntity.Salt,
 	}
 
-	fmt.Println("password:", adminModel.Password)
-	fmt.Println("salt:", adminModel.Salt)
-	fmt.Println("salt length:", len(adminModel.Salt))
 	err = adminModel.Insert(ctx, r.db, boil.Infer())
 	if err != nil {
 		return nil, domain.InsertRecordError{Err: err}

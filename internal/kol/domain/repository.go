@@ -9,6 +9,7 @@ import (
 )
 
 //go:generate mockgen -source=./repository.go -destination=../mock/repositorymock/repository_mock.go -package=repositorymock
+//nolint:interfacebloat
 type Repository interface {
 	GetKolByID(ctx context.Context, id uuid.UUID) (*entities.Kol, error)
 	GetKolByEmail(ctx context.Context, email string) (*entities.Kol, error)

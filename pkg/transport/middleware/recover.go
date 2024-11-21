@@ -10,7 +10,7 @@ import (
 )
 
 // GinRecover is wrap Recover for compatibility with gin.
-func GinRecover(logger *zerolog.Logger) gin.HandlerFunc {
+func GinRecover() gin.HandlerFunc {
 	return gin.CustomRecovery(func(c *gin.Context, err any) {
 		const size = 64 << 10
 		buf := make([]byte, size)

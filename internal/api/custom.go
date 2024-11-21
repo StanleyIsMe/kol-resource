@@ -10,7 +10,7 @@ import (
 	adminUseCase "kolresource/internal/admin/usecase"
 	"kolresource/internal/api/middleware"
 	kolHTTP "kolresource/internal/kol/delivery/http"
-	emailRepo "kolresource/internal/kol/repository/email"
+	"kolresource/internal/kol/repository/email"
 	kolRepo "kolresource/internal/kol/repository/sqlboiler"
 	kolUseCase "kolresource/internal/kol/usecase"
 	pkgMiddleware "kolresource/pkg/transport/middleware"
@@ -29,14 +29,14 @@ func (a *API) registerHTTPSvc(_ context.Context, dbStdConn *sql.DB) {
 	adminUseCase := adminUseCase.NewAdminUseCaseImpl(adminRepository, a.cfg)
 
 	kolRepository := kolRepo.NewKolRepository(dbStdConn)
-	emailRepository := emailRepo.NewEmailRepository(a.cfg)
+	emailRepository := email.NewRepository(a.cfg)
 	kolUseCase := kolUseCase.NewKolUseCaseImpl(kolRepository, emailRepository, a.cfg)
 
 	httpRouter.Use(
 		middleware.Cors(),
-		pkgMiddleware.GinRecover(a.logger),
-		pkgMiddleware.GinContextLogger(a.logger),
-		pkgMiddleware.GinTimeout(a.logger, defaultTimeout),
+		pkgMiddleware.GinRecover(),
+		pkgMiddleware.GinContextLogger(a.logger), //nolint:contextcheck
+		pkgMiddleware.GinTimeout(defaultTimeout), //nolint:contextcheck
 	)
 
 	adminHTTP.RegisterAdminRoutes(httpRouter, adminUseCase)
