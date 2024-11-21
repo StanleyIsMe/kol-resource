@@ -12,6 +12,7 @@ By implementing basic API applications, it is not only for practicing DDD model,
 - Comprehensive test coverage with race/leak detection
 - Trivy/Govulncheck for security scanning
 - Makefile for build, test, lint, etc.
+- Github Actions for CI
 
 ## Getting Started
 
