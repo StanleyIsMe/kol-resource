@@ -59,7 +59,7 @@ vuln-scan: ## scan for vulnerability issues with govulncheck (govulncheck binary
 
 APP_NAME_UND=$(shell echo "$(PROJECT_NAME)" | tr '-' '_')
 
-sqlboiler:
+sqlboiler: ## generate sqlboiler code
 	@( \
 	printf "Enter pass for db: "; read -s DB_PASSWORD && \
 	printf "Enter port(5432, 26257...): \n"; read -r DB_PORT && \
@@ -69,14 +69,14 @@ sqlboiler:
 	go mod tidy \
 	)
 
-migration-up:
+migration-up: ## database migration up
 	@( \
 	printf "Enter pass for db: \n"; read -s DB_PASSWORD && \
 	printf "Enter port(5432, 26257...): \n"; read -r DB_PORT &&\
 	migrate -database "postgres://root:$${DB_PASSWORD}@localhost:$${DB_PORT}/$(APP_NAME_UND)?sslmode=disable" -path database/migrations up \
 	)
 
-migration-down:
+migration-down: ## database migration down
 	@( \
 	printf "Enter pass for db: \n"; read -s DB_PASSWORD && \
 	printf "Enter port(5432, 26257...): \n"; read -r DB_PORT &&\
@@ -97,7 +97,7 @@ gen-migrate-sql:
 # build #
 #########
 
-build:
+build: ## build docker image
 	docker buildx build \
 	-f Dockerfile \
 	-t $(PROJECT_NAME) \

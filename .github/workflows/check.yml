@@ -1,0 +1,74 @@
+name: "check"
+
+on: 
+  pull_request:
+  push:
+    branches:
+      - "main"
+
+env:
+  GOLANG_VERSION: "1.23.0"
+  LINTER_VERSION: "v1.62.0"
+  TRIVY_VERSION: "v0.57.1"
+
+jobs:
+  lint:
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Install Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.GOLANG_VERSION }}
+          cache: true
+      - name: Cache golangci-lint
+        id: golangci-lint
+        uses: actions/cache@v4.1.2
+        with:
+          path: |
+            ~/.cache/golangci-lint
+          key: ${{ runner.os }}-golangci-lint
+      - name: Install golangci-lint
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $HOME/.local/bin ${{ env.LINTER_VERSION }}
+      - name: Lint all modules with golangci-lint
+        run: |
+          PATH=$PATH:$HOME/.local/bin make lint
+  sec-scan:
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Install Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.GOLANG_VERSION }}
+          cache: true
+      - name: Install trivy
+        run: |
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b $HOME/.local/bin ${{ env.TRIVY_VERSION }}
+      - name: Run security scan with trivy
+        run: make trivy-scan
+      - name: Install govuln
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+      - name: Run security scan with govuln
+        run: |
+          make vuln-scan
+  leak-test:
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Install Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.GOLANG_VERSION }}
+          cache: true
+      - name: Test with leak detector
+        run: |
+          make test-leak
