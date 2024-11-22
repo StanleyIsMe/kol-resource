@@ -1,12 +1,30 @@
 version: '3.3'
 
 services:
+  api:
+    image: kol-resource:latest
+    container_name: api
+    depends_on:
+      postgresql:
+        condition: service_healthy
+    ports:
+      - 8080:8080
+    environment:
+      APP_ENV: local_docker
+    networks:
+      - main-tier
+
   postgresql:
     image: bitnami/postgresql:17.0.0
     container_name: postgresql
     environment:
       POSTGRESQL_USERNAME: root
       POSTGRESQL_PASSWORD: password
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "root", "-d", "kol_resource"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     volumes:
       - ./psql:/bitnami/postgresql
     ports:

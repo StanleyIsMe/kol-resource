@@ -37,14 +37,15 @@ WORKDIR /src
 COPY ./ ./
  
 ARG GLOBAL_VAR_PKG
-
+ARG GO_GOOS=linux
+ARG GO_GOARCH=arm64
 ARG LAST_MAIN_COMMIT_HASH
 ARG LAST_MAIN_COMMIT_TIME
 
 ENV FLAG="-X ${GLOBAL_VAR_PKG}.CommitTime=${LAST_MAIN_COMMIT_TIME}"
 ENV FLAG="$FLAG -X ${GLOBAL_VAR_PKG}.CommitHash=${LAST_MAIN_COMMIT_HASH}"
 
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+RUN CGO_ENABLED=0 GOOS=${GO_GOOS} GOARCH=${GO_GOARCH} go build \
     -installsuffix 'static' \
     -ldflags "-s -w $FLAG" \
     -buildvcs=true \

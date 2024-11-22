@@ -101,10 +101,20 @@ build: ## build docker image
 	docker buildx build \
 	-f Dockerfile \
 	-t $(PROJECT_NAME) \
-	--platform linux/amd64 \
+	--platform linux/arm64 \
+	--build-arg GO_VERSION=1.23.0 \
+	--build-arg GO_GOOS=linux \
+	--build-arg GO_GOARCH=arm64 \
 	--build-arg GLOBAL_VAR_PKG=server \
 	--build-arg LAST_MAIN_COMMIT_HASH=$(shell git rev-parse HEAD) \
 	--build-arg LAST_MAIN_COMMIT_TIME=$(shell git log main -n1 --format='%cd' --date='iso-strict') \
 	--progress=plain \
 	--load \
 	./
+
+#########
+# deploy #
+#########
+
+up: ## run docker compose
+	docker compose -f deploy/dockercompose/docker-compose.yml up --build
