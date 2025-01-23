@@ -41,3 +41,18 @@ By implementing basic API applications, it is not only for practicing DDD model,
     ```sh
     make up
     ```
+
+5. Database migration(`if you are first time to run this project`)
+
+    ```sh
+    make migration-up
+    ```
+
+
+## ToDo
+
+- [ ] delivery layer unit test
+- [ ] Swagger API documentation
+- [ ] health check
+- [ ] monitoring
+- [ ] tracing

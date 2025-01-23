@@ -20,6 +20,7 @@ services:
     environment:
       POSTGRESQL_USERNAME: root
       POSTGRESQL_PASSWORD: password
+      POSTGRESQL_DATABASE: kol_resource
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "root", "-d", "kol_resource"]
       interval: 10s

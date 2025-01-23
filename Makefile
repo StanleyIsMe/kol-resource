@@ -117,4 +117,4 @@ build: ## build docker image
 #########
 
 up: ## run docker compose
-	docker compose -f deploy/dockercompose/docker-compose.yml up --build
+	docker-compose -f deploy/dockercompose/docker-compose.yml up --build
