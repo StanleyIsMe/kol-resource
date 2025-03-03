@@ -52,7 +52,7 @@ By implementing basic API applications, it is not only for practicing DDD model,
 ## ToDo
 
 - [ ] delivery layer unit test
-- [ ] Swagger API documentation
+- [x] Swagger API documentation
 - [ ] health check
 - [ ] monitoring
 - [ ] tracing
