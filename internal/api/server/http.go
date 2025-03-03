@@ -6,6 +6,11 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+
+	"kolresource/docs"
+
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 func (s *Server) SetupHTTPServer() {
@@ -16,6 +21,10 @@ func (s *Server) SetupHTTPServer() {
 
 	gin.SetMode(ginMode)
 	s.httpRouter = gin.New()
+
+	// swagger
+	docs.SwaggerInfo.BasePath = "/"
+	s.httpRouter.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	s.httpServer = &http.Server{
 		Addr:              fmt.Sprintf(":%d", s.cfg.HTTP.Port),

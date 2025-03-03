@@ -52,6 +52,13 @@ trivy-scan: ## scan for sec issues with trivy (trivy binary needed)
 vuln-scan: ## scan for vulnerability issues with govulncheck (govulncheck binary needed)
 	govulncheck ./...
 
+###########
+# swagger #
+###########
+
+swagger-gen: ## generate swagger docs
+	swag init -d ./cmd/api,./internal --parseDependency
+
 
 #######
 # sql #
@@ -118,3 +125,4 @@ build: ## build docker image
 
 up: ## run docker compose
 	docker-compose -f deploy/dockercompose/docker-compose.yml up --build
+
