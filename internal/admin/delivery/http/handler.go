@@ -19,6 +19,16 @@ func NewAdminHandler(adminUsecase usecase.AdminUseCase) *AdminHandler {
 	return &AdminHandler{adminUsecase: adminUsecase}
 }
 
+// @Summary Register admin
+// @Description Register a new admin user
+// @Tags admin
+// @Accept json
+// @Produce json
+// @Param request body RegisterRequest true "Register request"
+// @Success 200 {object} nil "empty result"
+// @Failure 400 {object} nil "invalid request"
+// @Failure 500 {object} business.ErrorResponse "internal error"
+// @Router /api/v1/register [post]
 func (h *AdminHandler) Register(c *gin.Context) {
 	ctx := c.Request.Context()
 
@@ -47,6 +57,16 @@ func (h *AdminHandler) Register(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{})
 }
 
+// @Summary Login admin
+// @Description Login with admin credentials
+// @Tags admin
+// @Accept json
+// @Produce json
+// @Param request body LoginRequest true "Login request"
+// @Success 200 {object} LoginResponse
+// @Failure 400 {object} nil "invalid request"
+// @Failure 500 {object} business.ErrorResponse "internal error"
+// @Router /api/v1/login [post]
 func (h *AdminHandler) Login(c *gin.Context) {
 	ctx := c.Request.Context()
 

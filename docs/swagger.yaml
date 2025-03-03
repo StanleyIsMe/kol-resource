@@ -1,0 +1,527 @@
+basePath: /api/v1
+definitions:
+  admin_delivery_http.LoginRequest:
+    properties:
+      password:
+        type: string
+      user_name:
+        type: string
+    required:
+    - password
+    - user_name
+    type: object
+  admin_delivery_http.LoginResponse:
+    properties:
+      admin_name:
+        type: string
+      token:
+        type: string
+    type: object
+  admin_delivery_http.RegisterRequest:
+    properties:
+      name:
+        type: string
+      password:
+        type: string
+      user_name:
+        type: string
+    required:
+    - name
+    - password
+    - user_name
+    type: object
+  business.ErrorResponse:
+    properties:
+      error_code:
+        type: string
+      error_message:
+        type: string
+    type: object
+  kol.Sex:
+    enum:
+    - m
+    - f
+    type: string
+    x-enum-varnames:
+    - SexMale
+    - SexFemale
+  kol_delivery_http.CreateKolRequest:
+    properties:
+      description:
+        maxLength: 500
+        type: string
+      email:
+        type: string
+      name:
+        maxLength: 50
+        type: string
+      sex:
+        allOf:
+        - $ref: '#/definitions/kol.Sex'
+        enum:
+        - m
+        - f
+      social_media:
+        maxLength: 255
+        type: string
+      tags:
+        items:
+          type: string
+        type: array
+    required:
+    - email
+    - name
+    - sex
+    type: object
+  kol_delivery_http.CreateProductRequest:
+    properties:
+      description:
+        maxLength: 500
+        type: string
+      name:
+        maxLength: 50
+        type: string
+    required:
+    - name
+    type: object
+  kol_delivery_http.CreateTagRequest:
+    properties:
+      name:
+        maxLength: 50
+        type: string
+    required:
+    - name
+    type: object
+  kol_delivery_http.ListKolsResponse:
+    properties:
+      kols:
+        items:
+          $ref: '#/definitions/kolresource_internal_kol_usecase.Kol'
+        type: array
+      total:
+        type: integer
+    type: object
+  kol_delivery_http.SendEmailRequest:
+    properties:
+      email_content:
+        minLength: 1
+        type: string
+      kol_ids:
+        items:
+          type: string
+        type: array
+      product_id:
+        type: string
+      subject:
+        maxLength: 100
+        minLength: 1
+        type: string
+    required:
+    - email_content
+    - kol_ids
+    - product_id
+    - subject
+    type: object
+  kol_delivery_http.UpdateKolRequest:
+    properties:
+      description:
+        maxLength: 500
+        type: string
+      email:
+        type: string
+      name:
+        type: string
+      sex:
+        allOf:
+        - $ref: '#/definitions/kol.Sex'
+        enum:
+        - m
+        - f
+      social_media:
+        maxLength: 255
+        type: string
+      tags:
+        items:
+          type: string
+        type: array
+    required:
+    - email
+    - name
+    - sex
+    type: object
+  kolresource_internal_kol_usecase.Kol:
+    properties:
+      description:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      sex:
+        $ref: '#/definitions/kol.Sex'
+      social_media:
+        type: string
+      tags:
+        items:
+          $ref: '#/definitions/kolresource_internal_kol_usecase.Tag'
+        type: array
+    type: object
+  kolresource_internal_kol_usecase.Product:
+    properties:
+      description:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  kolresource_internal_kol_usecase.Tag:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: grimmh6838@gmail.com
+    name: Stanley Hsieh
+  description: API Server for KOL Resource Management System
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  title: KOL Resource API
+  version: "1.0"
+paths:
+  /api/v1/email:
+    post:
+      consumes:
+      - application/json
+      description: Send email
+      parameters:
+      - description: Send email request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/kol_delivery_http.SendEmailRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: empty result
+        "400":
+          description: invalid request
+        "500":
+          description: internal error
+          schema:
+            $ref: '#/definitions/business.ErrorResponse'
+      summary: Send email
+      tags:
+      - email
+  /api/v1/kols:
+    get:
+      consumes:
+      - application/json
+      description: List kols
+      parameters:
+      - in: query
+        name: email
+        type: string
+      - in: query
+        name: name
+        type: string
+      - in: query
+        name: page_index
+        required: true
+        type: integer
+      - in: query
+        name: page_size
+        required: true
+        type: integer
+      - enum:
+        - m
+        - f
+        in: query
+        name: sex
+        type: string
+        x-enum-varnames:
+        - SexMale
+        - SexFemale
+      - in: query
+        name: tag
+        type: string
+      - collectionFormat: csv
+        in: query
+        items:
+          type: string
+        name: tag_ids
+        type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Kol list
+          schema:
+            $ref: '#/definitions/kol_delivery_http.ListKolsResponse'
+        "400":
+          description: invalid request
+        "500":
+          description: internal error
+          schema:
+            $ref: '#/definitions/business.ErrorResponse'
+      summary: List kols
+      tags:
+      - kol
+    post:
+      consumes:
+      - application/json
+      description: Create a new kol
+      parameters:
+      - description: Create kol request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/kol_delivery_http.CreateKolRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: empty result
+        "400":
+          description: invalid request
+        "500":
+          description: internal error
+          schema:
+            $ref: '#/definitions/business.ErrorResponse'
+      summary: Create a new kol
+      tags:
+      - kol
+    put:
+      consumes:
+      - application/json
+      description: Update a kol
+      parameters:
+      - description: Kol ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Update kol request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/kol_delivery_http.UpdateKolRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: empty result
+        "400":
+          description: invalid request
+        "500":
+          description: internal error
+          schema:
+            $ref: '#/definitions/business.ErrorResponse'
+      summary: Update a kol
+      tags:
+      - kol
+  /api/v1/kols/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get a kol by id
+      parameters:
+      - description: Kol ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Kol details
+          schema:
+            $ref: '#/definitions/kolresource_internal_kol_usecase.Kol'
+        "400":
+          description: invalid kol id
+        "500":
+          description: internal error
+          schema:
+            $ref: '#/definitions/business.ErrorResponse'
+      summary: Get a kol by id
+      tags:
+      - kol
+  /api/v1/login:
+    post:
+      consumes:
+      - application/json
+      description: Login with admin credentials
+      parameters:
+      - description: Login request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/admin_delivery_http.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/admin_delivery_http.LoginResponse'
+        "400":
+          description: invalid request
+        "500":
+          description: internal error
+          schema:
+            $ref: '#/definitions/business.ErrorResponse'
+      summary: Login admin
+      tags:
+      - admin
+  /api/v1/products:
+    get:
+      consumes:
+      - application/json
+      description: List products
+      parameters:
+      - description: Product name
+        in: query
+        name: name
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Product list
+          schema:
+            items:
+              $ref: '#/definitions/kolresource_internal_kol_usecase.Product'
+            type: array
+        "400":
+          description: invalid request
+        "500":
+          description: internal error
+          schema:
+            $ref: '#/definitions/business.ErrorResponse'
+      summary: List products
+      tags:
+      - product
+    post:
+      consumes:
+      - application/json
+      description: Create a new product
+      parameters:
+      - description: Create product request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/kol_delivery_http.CreateProductRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: empty result
+        "400":
+          description: invalid request
+        "500":
+          description: internal error
+          schema:
+            $ref: '#/definitions/business.ErrorResponse'
+      summary: Create a new product
+      tags:
+      - product
+  /api/v1/register:
+    post:
+      consumes:
+      - application/json
+      description: Register a new admin user
+      parameters:
+      - description: Register request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/admin_delivery_http.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: empty result
+        "400":
+          description: invalid request
+        "500":
+          description: internal error
+          schema:
+            $ref: '#/definitions/business.ErrorResponse'
+      summary: Register admin
+      tags:
+      - admin
+  /api/v1/tags:
+    get:
+      consumes:
+      - application/json
+      description: List tags
+      parameters:
+      - description: Tag name
+        in: query
+        name: name
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Tag list
+          schema:
+            items:
+              $ref: '#/definitions/kolresource_internal_kol_usecase.Tag'
+            type: array
+        "400":
+          description: invalid request
+        "500":
+          description: internal error
+          schema:
+            $ref: '#/definitions/business.ErrorResponse'
+      summary: List tags
+      tags:
+      - tag
+    post:
+      consumes:
+      - application/json
+      description: Create a new tag
+      parameters:
+      - description: Create tag request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/kol_delivery_http.CreateTagRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: empty result
+        "400":
+          description: invalid request
+        "500":
+          description: internal error
+          schema:
+            $ref: '#/definitions/business.ErrorResponse'
+      summary: Create a new tag
+      tags:
+      - tag
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer" followed by a space and JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
