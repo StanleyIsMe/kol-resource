@@ -25,7 +25,7 @@ const shutdownGracePeriod = 30 * time.Second
 // @contact.email  grimmh6838@gmail.com
 
 // @license.name  Apache 2.0
-// @license.url   http://www.apache.org/licenses/LICENSE-2.0.html
+// @license.url   https://www.gnu.org/licenses/gpl-3.0.html
 
 // @host      localhost:8080
 // @BasePath  /api/v1
