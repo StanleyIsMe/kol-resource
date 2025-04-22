@@ -54,6 +54,31 @@ func (h *KolHandler) CreateKol(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{})
 }
 
+func (h *KolHandler) BatchCreateKolsByXlsx(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	var req BatchCreateKolsByXlsxRequest
+	if err := c.ShouldBind(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": errors.New("invalid request")})
+
+		return
+	}
+
+	if err := req.Validate(); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+
+		return
+	}
+
+	if err := h.uc.BatchCreateKolsByXlsx(ctx, req.ToUsecaseParam(c)); err != nil {
+		c.JSON(business.UseCaesErrorToErrorResp(err))
+
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{})
+}
+
 // @Summary Update a kol
 // @Description Update a kol
 // @Tags kol

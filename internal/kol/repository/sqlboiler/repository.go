@@ -10,6 +10,7 @@ import (
 	"kolresource/internal/kol/domain"
 	"kolresource/internal/kol/domain/entities"
 
+	"github.com/volatiletech/null/v9"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 
@@ -19,6 +20,8 @@ import (
 type KolRepository struct {
 	db *sql.DB
 }
+
+var _ domain.Repository = (*KolRepository)(nil)
 
 func NewKolRepository(db *sql.DB) *KolRepository {
 	return &KolRepository{db: db}
@@ -211,8 +214,8 @@ func (repo *KolRepository) DeleteKolByID(ctx context.Context, id uuid.UUID) erro
 
 type KolWithTags struct {
 	model.Kol `boil:",bind"`
-	Tag       string `boil:"tag"`
-	TagID     string `boil:"tag_id"`
+	Tag       null.String `boil:"tag"`
+	TagID     null.String `boil:"tag_id"`
 }
 
 func (repo *KolRepository) GetKolWithTagsByID(ctx context.Context, id uuid.UUID) (*domain.Kol, error) {
@@ -240,14 +243,14 @@ func (repo *KolRepository) GetKolWithTagsByID(ctx context.Context, id uuid.UUID)
 	kolAggregate := domain.NewKol(kolEntity)
 
 	for _, tag := range kolWithTags {
-		tagUUID, err := uuid.Parse(tag.TagID)
+		tagUUID, err := uuid.Parse(tag.TagID.String)
 		if err != nil {
-			return nil, domain.UUIDInvalidError{Field: "tag_id", UUID: tag.TagID}
+			return nil, domain.UUIDInvalidError{Field: "tag_id", UUID: tag.TagID.String}
 		}
 
 		kolAggregate.AppendTag(&entities.Tag{
 			ID:   tagUUID,
-			Name: tag.Tag,
+			Name: tag.Tag.String,
 		})
 	}
 
@@ -771,14 +774,14 @@ func (repo *KolRepository) newKolWithTagsFromModel(kolWithTags []KolWithTags) ([
 			kols = append(kols, kolMap[kolWithTag.ID])
 		}
 
-		tagUUID, err := uuid.Parse(kolWithTag.TagID)
+		tagUUID, err := uuid.Parse(kolWithTag.TagID.String)
 		if err != nil {
-			return nil, domain.UUIDInvalidError{Field: "tag_id", UUID: kolWithTag.TagID}
+			return nil, domain.UUIDInvalidError{Field: "tag_id", UUID: kolWithTag.TagID.String}
 		}
 
 		kolMap[kolWithTag.ID].AppendTag(&entities.Tag{
 			ID:   tagUUID,
-			Name: kolWithTag.Tag,
+			Name: kolWithTag.Tag.String,
 		})
 	}
 

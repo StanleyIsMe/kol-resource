@@ -16,6 +16,8 @@ type KolUseCaseImpl struct {
 	emailRepo domain.EmailRepository
 }
 
+var _ KolUseCase = (*KolUseCaseImpl)(nil)
+
 func NewKolUseCaseImpl(repo domain.Repository, emailRepo domain.EmailRepository) *KolUseCaseImpl {
 	return &KolUseCaseImpl{repo: repo, emailRepo: emailRepo}
 }
@@ -49,6 +51,60 @@ func (uc *KolUseCaseImpl) CreateKol(ctx context.Context, param CreateKolParam) e
 
 	return nil
 }
+
+// func (uc *KolUseCaseImpl) BatchCreateKolsByXlsx(ctx context.Context, param BatchCreateKolsByXlsxParam) error {
+// 	uploadFile, err := param.File.Open()
+// 	if err != nil {
+// 		return fmt.Errorf("file.Open error: %w", err)
+// 	}
+
+// 	defer uploadFile.Close()
+
+// 	xlsxFile, err := excelize.OpenReader(uploadFile)
+// 	if err != nil {
+// 		return fmt.Errorf("excelize.OpenReader error: %w", err)
+// 	}
+
+// 	defer xlsxFile.Close()
+
+// 	if len(xlsxFile.GetSheetList()) != 1 {
+// 		return fmt.Errorf("xlsxFile.GetSheetList error: %w", err)
+// 	}
+
+// 	sheetName := xlsxFile.GetSheetList()[0]
+
+// 	// rows, err := xlsxFile.GetRows(sheetName)
+// 	// if err != nil {
+// 	// 	return fmt.Errorf("xlsxFile.GetRows error: %w", err)
+// 	// }
+
+// 	// for index, row := range rows {
+// 	// 	if index >= 30 {
+// 	// 		break
+// 	// 	}
+
+// 	// 	fmt.Println(row, "!!")
+// 	// }
+// 	rows, err := xlsxFile.Rows(sheetName)
+// 	if err != nil {
+// 		return fmt.Errorf("xlsxFile.Rows error: %w", err)
+// 	}
+
+// 	for rows.Next() {
+// 		row, err := rows.Columns()
+// 		if err != nil {
+// 			fmt.Println(err)
+// 		}
+
+// 		row[0]
+// 	}
+
+// 	if err = rows.Close(); err != nil {
+// 		fmt.Println(err)
+// 	}
+
+// 	return nil
+// }
 
 func (uc *KolUseCaseImpl) GetKolByID(ctx context.Context, kolID uuid.UUID) (*Kol, error) {
 	kolAggregate, err := uc.repo.GetKolWithTagsByID(ctx, kolID)

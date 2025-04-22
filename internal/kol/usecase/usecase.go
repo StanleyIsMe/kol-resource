@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"kolresource/internal/kol"
+	"mime/multipart"
 
 	"github.com/google/uuid"
 )
@@ -13,6 +14,7 @@ type KolUseCase interface {
 	UpdateKol(ctx context.Context, param UpdateKolParam) error
 	ListKols(ctx context.Context, param ListKolsParam) ([]*Kol, int, error)
 
+	BatchCreateKolsByXlsx(ctx context.Context, param BatchCreateKolsByXlsxParam) error
 	CreateTag(ctx context.Context, param CreateTagParam) error
 	ListTagsByName(ctx context.Context, name string) ([]*Tag, error)
 
@@ -51,6 +53,11 @@ type CreateKolParam struct {
 	Sex            kol.Sex     `json:"sex"`
 	Tags           []uuid.UUID `json:"tags"`
 	UpdatedAdminID uuid.UUID   `json:"updated_admin_id"`
+}
+
+type BatchCreateKolsByXlsxParam struct {
+	File           *multipart.FileHeader `form:"file" binding:"required"`
+	UpdatedAdminID uuid.UUID             
 }
 
 type UpdateKolParam struct {

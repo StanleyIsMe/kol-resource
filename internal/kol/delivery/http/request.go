@@ -1,11 +1,14 @@
 package http
 
 import (
+	"errors"
 	"fmt"
 	"kolresource/internal/admin"
 	"kolresource/internal/kol"
 	"kolresource/internal/kol/usecase"
 	"kolresource/pkg/transport/pager"
+	"mime/multipart"
+	"path/filepath"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -28,6 +31,25 @@ func (r *CreateKolRequest) ToUsecaseParam(c *gin.Context) usecase.CreateKolParam
 		SocialMedia:    r.SocialMedia,
 		Sex:            r.Sex,
 		Tags:           r.Tags,
+		UpdatedAdminID: GetAdminIDFromContext(c),
+	}
+}
+
+type BatchCreateKolsByXlsxRequest struct {
+	File *multipart.FileHeader `form:"file" binding:"required"`
+}
+
+func (r *BatchCreateKolsByXlsxRequest) Validate() error {
+	if filepath.Ext(r.File.Filename) != ".xlsx" {
+		return errors.New("invalid file type")
+	}
+
+	return nil
+}
+
+func (r *BatchCreateKolsByXlsxRequest) ToUsecaseParam(c *gin.Context) usecase.BatchCreateKolsByXlsxParam {
+	return usecase.BatchCreateKolsByXlsxParam{
+		File:           r.File,
 		UpdatedAdminID: GetAdminIDFromContext(c),
 	}
 }
