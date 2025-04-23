@@ -29,6 +29,8 @@ type ExcelRawData struct {
 	Email       string   `validate:"required,email"`
 }
 
+// BatchCreateKolsByXlsx is responsible for creating multiple kols from an excel file.
+// TODO: need collect error per row data and log it
 func (uc *KolUseCaseImpl) BatchCreateKolsByXlsx(ctx context.Context, param BatchCreateKolsByXlsxParam) error {
 	uploadFile, err := param.File.Open()
 	if err != nil {
@@ -63,7 +65,15 @@ func (uc *KolUseCaseImpl) BatchCreateKolsByXlsx(ctx context.Context, param Batch
 	for rows.Next() {
 		cols, err := rows.Columns()
 		if err != nil {
-			fmt.Println(err)
+			fmt.Println(err) //nolint:forbidigo
+
+			continue
+		}
+
+		if len(cols) < rowColumnIndexEmail {
+			fmt.Println("cols length is less than rowColumnIndexEmail") //nolint:forbidigo
+
+			continue
 		}
 
 		rawData := &ExcelRawData{
@@ -75,7 +85,7 @@ func (uc *KolUseCaseImpl) BatchCreateKolsByXlsx(ctx context.Context, param Batch
 		}
 
 		if err := validate.Struct(rawData); err != nil {
-			fmt.Println(err)
+			fmt.Println(err) //nolint:forbidigo
 
 			continue
 		}
@@ -120,7 +130,7 @@ func (uc *KolUseCaseImpl) BatchCreateKolsByXlsx(ctx context.Context, param Batch
 			Email:          rawData.Email,
 			UpdatedAdminID: param.UpdatedAdminID,
 		}); err != nil {
-			fmt.Println(err)
+			fmt.Println(err) //nolint:forbidigo
 
 			continue
 		}
@@ -138,6 +148,7 @@ type UpsertKolParam struct {
 	UpdatedAdminID uuid.UUID
 }
 
+// upsertKol is responsible for upserting a kol.
 func (uc *KolUseCaseImpl) upsertKol(ctx context.Context, param UpsertKolParam) error {
 	existKol, err := uc.repo.GetKolByEmail(ctx, param.Email)
 	if err != nil && !errors.Is(err, domain.ErrDataNotFound) {
@@ -175,4 +186,3 @@ func (uc *KolUseCaseImpl) upsertKol(ctx context.Context, param UpsertKolParam) e
 
 	return nil
 }
-

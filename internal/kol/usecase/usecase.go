@@ -57,7 +57,7 @@ type CreateKolParam struct {
 
 type BatchCreateKolsByXlsxParam struct {
 	File           *multipart.FileHeader `form:"file" binding:"required"`
-	UpdatedAdminID uuid.UUID             
+	UpdatedAdminID uuid.UUID
 }
 
 type UpdateKolParam struct {
@@ -93,10 +93,17 @@ type CreateProductParam struct {
 }
 
 type SendEmailParam struct {
-	Subject          string      `json:"subject"`
-	EmailContent     string      `json:"email_content"`
-	KolIDs           []uuid.UUID `json:"kol_ids"`
-	ProductID        uuid.UUID   `json:"product_id"`
-	UpdatedAdminID   uuid.UUID   `json:"updated_admin_id"`
-	UpdatedAdminName string      `json:"updated_admin_name"`
+	Subject          string           `json:"subject"`
+	EmailContent     string           `json:"email_content"`
+	KolIDs           []uuid.UUID      `json:"kol_ids"`
+	ProductID        uuid.UUID        `json:"product_id"`
+	UpdatedAdminID   uuid.UUID        `json:"updated_admin_id"`
+	UpdatedAdminName string           `json:"updated_admin_name"`
+	Images           []SendEmailImage `json:"images"`
+}
+
+type SendEmailImage struct {
+	ContentID string
+	Data      string
+	ImageType string
 }

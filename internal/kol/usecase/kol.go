@@ -305,10 +305,19 @@ func (uc *KolUseCaseImpl) SendEmail(ctx context.Context, param SendEmailParam) e
 		return NotFoundError{resource: "kol", id: param.KolIDs}
 	}
 
+	sendEmailImages := make([]domain.SendEmailImage, 0, len(param.Images))
+	for _, img := range param.Images {
+		sendEmailImages = append(sendEmailImages, domain.SendEmailImage{
+			ContentID: img.ContentID,
+			Data:      img.Data,
+			ImageType: img.ImageType,
+		})
+	}
 	sendEmailParams := domain.SendEmailParams{
 		Subject:  param.Subject,
 		Body:     param.EmailContent,
 		ToEmails: make([]domain.ToEmail, 0, len(kols)),
+		Images:   sendEmailImages,
 	}
 
 	for _, kol := range kols {

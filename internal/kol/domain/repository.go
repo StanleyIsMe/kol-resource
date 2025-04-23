@@ -111,9 +111,16 @@ type SendEmailParams struct {
 	Subject  string
 	Body     string
 	ToEmails []ToEmail
+	Images   []SendEmailImage
 }
 
 type ToEmail struct {
 	Email string
 	Name  string
+}
+
+type SendEmailImage struct {
+	ContentID string
+	Data      string
+	ImageType string
 }
