@@ -63,7 +63,7 @@ func (h *KolHandler) CreateKol(c *gin.Context) {
 // @Success 200 {object} nil "empty result"
 // @Failure 400 {object} nil "invalid request"
 // @Failure 500 {object} business.ErrorResponse "internal error"
-// @Router /api/v1/kols/batch [post]
+// @Router /api/v1/kols/upload [post]
 func (h *KolHandler) BatchCreateKolsByXlsx(c *gin.Context) {
 	ctx := c.Request.Context()
 
