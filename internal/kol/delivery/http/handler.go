@@ -82,7 +82,7 @@ func (h *KolHandler) BatchCreateKolsByXlsx(c *gin.Context) {
 
 	if err := h.uc.BatchCreateKolsByXlsx(ctx, req.ToUsecaseParam(c)); err != nil {
 		zerolog.Ctx(ctx).Error().Fields(map[string]any{
-			"error":   err,
+			"error": err,
 		}).Msg("kol batch create error")
 
 		c.JSON(business.UseCaesErrorToErrorResp(err))
