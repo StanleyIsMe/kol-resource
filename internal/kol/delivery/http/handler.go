@@ -54,6 +54,45 @@ func (h *KolHandler) CreateKol(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{})
 }
 
+// @Summary Batch create kols by xlsx
+// @Description Batch create kols by xlsx
+// @Tags kol
+// @Accept multipart/form-data
+// @Produce json
+// @Param file formData file true "XLSX file"
+// @Success 200 {object} nil "empty result"
+// @Failure 400 {object} nil "invalid request"
+// @Failure 500 {object} business.ErrorResponse "internal error"
+// @Router /api/v1/kols/upload [post]
+func (h *KolHandler) BatchCreateKolsByXlsx(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	var req BatchCreateKolsByXlsxRequest
+	if err := c.ShouldBind(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": errors.New("invalid request")})
+
+		return
+	}
+
+	if err := req.Validate(); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+
+		return
+	}
+
+	if err := h.uc.BatchCreateKolsByXlsx(ctx, req.ToUsecaseParam(c)); err != nil {
+		zerolog.Ctx(ctx).Error().Fields(map[string]any{
+			"error": err,
+		}).Msg("kol batch create error")
+
+		c.JSON(business.UseCaesErrorToErrorResp(err))
+
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{})
+}
+
 // @Summary Update a kol
 // @Description Update a kol
 // @Tags kol

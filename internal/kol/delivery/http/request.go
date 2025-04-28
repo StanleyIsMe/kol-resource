@@ -1,11 +1,14 @@
 package http
 
 import (
+	"errors"
 	"fmt"
 	"kolresource/internal/admin"
 	"kolresource/internal/kol"
 	"kolresource/internal/kol/usecase"
 	"kolresource/pkg/transport/pager"
+	"mime/multipart"
+	"path/filepath"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -28,6 +31,25 @@ func (r *CreateKolRequest) ToUsecaseParam(c *gin.Context) usecase.CreateKolParam
 		SocialMedia:    r.SocialMedia,
 		Sex:            r.Sex,
 		Tags:           r.Tags,
+		UpdatedAdminID: GetAdminIDFromContext(c),
+	}
+}
+
+type BatchCreateKolsByXlsxRequest struct {
+	File *multipart.FileHeader `form:"file" binding:"required"`
+}
+
+func (r *BatchCreateKolsByXlsxRequest) Validate() error {
+	if filepath.Ext(r.File.Filename) != ".xlsx" {
+		return errors.New("invalid file type")
+	}
+
+	return nil
+}
+
+func (r *BatchCreateKolsByXlsxRequest) ToUsecaseParam(c *gin.Context) usecase.BatchCreateKolsByXlsxParam {
+	return usecase.BatchCreateKolsByXlsxParam{
+		File:           r.File,
 		UpdatedAdminID: GetAdminIDFromContext(c),
 	}
 }
@@ -114,13 +136,29 @@ func (r *CreateProductRequest) ToUsecaseParam(c *gin.Context) usecase.CreateProd
 }
 
 type SendEmailRequest struct {
-	Subject      string      `json:"subject" binding:"required,gte=1,lte=100"`
-	EmailContent string      `json:"email_content" binding:"required,gte=1"`
-	KolIDs       []uuid.UUID `json:"kol_ids" binding:"required"`
-	ProductID    uuid.UUID   `json:"product_id" binding:"required"`
+	Subject      string           `json:"subject" binding:"required,gte=1,lte=100"`
+	EmailContent string           `json:"email_content" binding:"required,gte=1"`
+	KolIDs       []uuid.UUID      `json:"kol_ids" binding:"required"`
+	ProductID    uuid.UUID        `json:"product_id" binding:"required"`
+	Images       []SendEmailImage `json:"images" binding:"dive"`
+}
+
+type SendEmailImage struct {
+	ContentID string `json:"content_id" binding:"required"`
+	Data      string `json:"data" binding:"required"`
+	ImageType string `json:"type" binding:"required"`
 }
 
 func (r *SendEmailRequest) ToUsecaseParam(c *gin.Context) usecase.SendEmailParam {
+	images := make([]usecase.SendEmailImage, len(r.Images))
+	for index, image := range r.Images {
+		images[index] = usecase.SendEmailImage{
+			ContentID: image.ContentID,
+			Data:      image.Data,
+			ImageType: image.ImageType,
+		}
+	}
+
 	return usecase.SendEmailParam{
 		Subject:          r.Subject,
 		EmailContent:     r.EmailContent,
@@ -128,6 +166,7 @@ func (r *SendEmailRequest) ToUsecaseParam(c *gin.Context) usecase.SendEmailParam
 		UpdatedAdminID:   GetAdminIDFromContext(c),
 		UpdatedAdminName: c.GetString(admin.AdminNameKey),
 		ProductID:        r.ProductID,
+		Images:           images,
 	}
 }
 

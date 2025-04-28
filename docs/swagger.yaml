@@ -101,11 +101,28 @@ definitions:
       total:
         type: integer
     type: object
+  kol_delivery_http.SendEmailImage:
+    properties:
+      content_id:
+        type: string
+      data:
+        type: string
+      type:
+        type: string
+    required:
+    - content_id
+    - data
+    - type
+    type: object
   kol_delivery_http.SendEmailRequest:
     properties:
       email_content:
         minLength: 1
         type: string
+      images:
+        items:
+          $ref: '#/definitions/kol_delivery_http.SendEmailImage'
+        type: array
       kol_ids:
         items:
           type: string
@@ -356,6 +373,31 @@ paths:
           schema:
             $ref: '#/definitions/business.ErrorResponse'
       summary: Get a kol by id
+      tags:
+      - kol
+  /api/v1/kols/upload:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Batch create kols by xlsx
+      parameters:
+      - description: XLSX file
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: empty result
+        "400":
+          description: invalid request
+        "500":
+          description: internal error
+          schema:
+            $ref: '#/definitions/business.ErrorResponse'
+      summary: Batch create kols by xlsx
       tags:
       - kol
   /api/v1/login:

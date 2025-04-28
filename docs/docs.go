@@ -228,6 +228,44 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/kols/upload": {
+            "post": {
+                "description": "Batch create kols by xlsx",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "kol"
+                ],
+                "summary": "Batch create kols by xlsx",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "XLSX file",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "empty result"
+                    },
+                    "400": {
+                        "description": "invalid request"
+                    },
+                    "500": {
+                        "description": "internal error",
+                        "schema": {
+                            "$ref": "#/definitions/business.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/kols/{id}": {
             "get": {
                 "description": "Get a kol by id",
@@ -667,6 +705,25 @@ const docTemplate = `{
                 }
             }
         },
+        "kol_delivery_http.SendEmailImage": {
+            "type": "object",
+            "required": [
+                "content_id",
+                "data",
+                "type"
+            ],
+            "properties": {
+                "content_id": {
+                    "type": "string"
+                },
+                "data": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
         "kol_delivery_http.SendEmailRequest": {
             "type": "object",
             "required": [
@@ -679,6 +736,12 @@ const docTemplate = `{
                 "email_content": {
                     "type": "string",
                     "minLength": 1
+                },
+                "images": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/kol_delivery_http.SendEmailImage"
+                    }
                 },
                 "kol_ids": {
                     "type": "array",

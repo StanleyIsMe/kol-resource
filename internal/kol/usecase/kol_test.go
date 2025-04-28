@@ -899,6 +899,7 @@ func TestKolUseCaseImpl_SendEmail(t *testing.T) {
 					Subject:    "Test Subject",
 					Body:       "Test Content",
 					ToEmails:   []domain.ToEmail{{Email: "test@example.com", Name: "test-kol"}},
+					Images:     []domain.SendEmailImage{{ContentID: "test-content-id", Data: "test-data", ImageType: "test-image-type"}},
 				}
 
 				emailRepoMock.EXPECT().SendEmail(gomock.Any(), sendEmailParams).Return(nil)
@@ -923,6 +924,7 @@ func TestKolUseCaseImpl_SendEmail(t *testing.T) {
 				EmailContent: "Test Content",
 				UpdatedAdminID:     uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6"),
 				UpdatedAdminName:   "test-admin",
+				Images:           []SendEmailImage{{ContentID: "test-content-id", Data: "test-data", ImageType: "test-image-type"}},
 			},
 		},
 		{
