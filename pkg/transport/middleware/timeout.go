@@ -17,7 +17,7 @@ func GinTimeout(timeout time.Duration) gin.HandlerFunc {
 		// Skip timeout middleware for specific paths
 		if isSkipTimeout(c.Request.URL.Path) {
 			c.Next()
-			
+
 			return
 		}
 

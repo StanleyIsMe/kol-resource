@@ -9,6 +9,7 @@ import (
 	"kolresource/internal/kol/domain"
 	"kolresource/pkg/config"
 
+	"github.com/rs/zerolog"
 	"gopkg.in/gomail.v2"
 )
 
@@ -28,7 +29,7 @@ type MailImage struct {
 	Header   map[string][]string
 }
 
-func (repo *Repository) SendEmail(_ context.Context, param domain.SendEmailParams) error {
+func (repo *Repository) SendEmail(ctx context.Context, param domain.SendEmailParams) error {
 	dialer := gomail.NewDialer(
 		repo.cfg.CustomConfig.Email.ServerHost,
 		repo.cfg.CustomConfig.Email.ServerPort,
@@ -84,13 +85,18 @@ func (repo *Repository) SendEmail(_ context.Context, param domain.SendEmailParam
 				gomail.SetCopyFunc(func(w io.Writer) error {
 					_, err := w.Write(img.Data)
 
-					return fmt.Errorf("failed to write image: %w", err)
+					return err
 				}),
 				gomail.SetHeader(img.Header),
 			)
 		}
 
 		if err := gomail.Send(sendCloser, mailMsg); err != nil {
+			zerolog.Ctx(ctx).Error().Fields(map[string]any{
+				"error":   err,
+				"toEmail": toEmail,
+			}).Msg("failed to send email")
+
 			return fmt.Errorf("failed to send email: %w", err)
 		}
 
