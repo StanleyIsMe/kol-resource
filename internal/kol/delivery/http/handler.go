@@ -170,6 +170,40 @@ func (h *KolHandler) GetKolByID(c *gin.Context) {
 	c.JSON(http.StatusOK, kol)
 }
 
+// @Summary Delete a kol by id
+// @Description Delete a kol by id
+// @Tags kol
+// @Accept json
+// @Produce json
+// @Param id path string true "Kol ID"
+// @Success 200 {object} nil "empty result"
+// @Failure 400 {object} nil "invalid kol id"
+// @Failure 500 {object} business.ErrorResponse "internal error"
+// @Router /api/v1/kols/{id} [delete]
+func (h *KolHandler) DeleteKolByID(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	kolID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": errors.New("invalid kol id")})
+
+		return
+	}
+
+	if err := h.uc.DeleteKolByID(ctx, kolID); err != nil {
+		zerolog.Ctx(ctx).Error().Fields(map[string]any{
+			"payload": kolID,
+			"error":   err,
+		}).Msg("kol delete by id error")
+
+		c.JSON(business.UseCaesErrorToErrorResp(err))
+
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{})
+}
+
 // @Summary List kols
 // @Description List kols
 // @Tags kol

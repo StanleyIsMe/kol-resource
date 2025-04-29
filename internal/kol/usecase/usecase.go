@@ -8,9 +8,10 @@ import (
 	"github.com/google/uuid"
 )
 
-type KolUseCase interface {
+type KolUseCase interface { //nolint:interfacebloat
 	CreateKol(ctx context.Context, param CreateKolParam) error
 	GetKolByID(ctx context.Context, kolID uuid.UUID) (*Kol, error)
+	DeleteKolByID(ctx context.Context, kolID uuid.UUID) error
 	UpdateKol(ctx context.Context, param UpdateKolParam) error
 	ListKols(ctx context.Context, param ListKolsParam) ([]*Kol, int, error)
 
