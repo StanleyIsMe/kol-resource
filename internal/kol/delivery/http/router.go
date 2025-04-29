@@ -14,6 +14,7 @@ func RegisterKolRoutes(router *gin.RouterGroup, kolUsecase usecase.KolUseCase) {
 	v1.PUT("/kols/:id", kolHandler.UpdateKol)
 	v1.GET("/kols/:id", kolHandler.GetKolByID)
 	v1.GET("/kols", kolHandler.ListKols)
+	v1.DELETE("/kols/:id", kolHandler.DeleteKolByID)
 	v1.POST("/kols/upload", kolHandler.BatchCreateKolsByXlsx)
 
 	v1.POST("/tags", kolHandler.CreateTag)

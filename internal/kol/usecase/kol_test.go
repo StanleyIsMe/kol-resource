@@ -1089,3 +1089,73 @@ func TestKolUseCaseImpl_SendEmail(t *testing.T) {
 		})
 	}
 }
+
+func TestKolUseCaseImpl_DeleteKolByID(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name          string
+		wantErr       bool
+		expectedError error
+		getRepoMock   func(ctrl *gomock.Controller) domain.Repository
+		args          uuid.UUID
+	}{
+		{
+			name:          "success",
+			wantErr:       false,
+			expectedError: nil,
+			getRepoMock: func(ctrl *gomock.Controller) domain.Repository {
+				repoMock := repositorymock.NewMockRepository(ctrl)
+				repoMock.EXPECT().DeleteKolByID(gomock.Any(), gomock.Any()).Return(nil)
+
+				return repoMock
+			},
+			args: uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6"),
+		},
+		{
+			name:          "delete_kol_by_id_error",
+			wantErr:       true,
+			expectedError: fmt.Errorf("repo.DeleteKolByID error: %w", errors.New("database error")),
+			getRepoMock: func(ctrl *gomock.Controller) domain.Repository {
+				repoMock := repositorymock.NewMockRepository(ctrl)
+				repoMock.EXPECT().DeleteKolByID(gomock.Any(), gomock.Any()).Return(errors.New("database error"))
+
+				return repoMock
+			},
+			args: uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6"),
+		},
+		{
+			name:          "delete_kol_by_id_not_found",
+			wantErr:       true,
+			expectedError: NotFoundError{resource: "kol", id: "0193487b-f1a2-7a72-8ae4-197b84dc52d6"},
+			getRepoMock: func(ctrl *gomock.Controller) domain.Repository {
+				repoMock := repositorymock.NewMockRepository(ctrl)
+				repoMock.EXPECT().DeleteKolByID(gomock.Any(), gomock.Any()).Return(domain.ErrDataNotFound)
+
+				return repoMock
+			},
+			args: uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6"),
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctrl := gomock.NewController(t)
+
+			repoMock := tt.getRepoMock(ctrl)
+			uc := NewKolUseCaseImpl(repoMock, nil)
+
+			err := uc.DeleteKolByID(context.Background(), tt.args)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("KolUseCaseImpl.DeleteKolByID() error = %v, wantErr %v", err, tt.wantErr)
+			}
+
+			if tt.wantErr && err.Error() != tt.expectedError.Error() {
+				t.Errorf("KolUseCaseImpl.DeleteKolByID() error = %v, expectedError %v", err, tt.expectedError)
+			}
+		})
+	}
+}
