@@ -29,12 +29,12 @@ type Kol struct {
 	Email          string    `boil:"email" json:"email" toml:"email" yaml:"email"`
 	Description    string    `boil:"description" json:"description" toml:"description" yaml:"description"`
 	Sex            Sex       `boil:"sex" json:"sex" toml:"sex" yaml:"sex"`
+	SocialMedia    string    `boil:"social_media" json:"social_media" toml:"social_media" yaml:"social_media"`
 	Enable         bool      `boil:"enable" json:"enable" toml:"enable" yaml:"enable"`
 	UpdatedAdminID string    `boil:"updated_admin_id" json:"updated_admin_id" toml:"updated_admin_id" yaml:"updated_admin_id"`
 	CreatedAt      time.Time `boil:"created_at" json:"created_at" toml:"created_at" yaml:"created_at"`
 	UpdatedAt      time.Time `boil:"updated_at" json:"updated_at" toml:"updated_at" yaml:"updated_at"`
 	DeletedAt      null.Time `boil:"deleted_at" json:"deleted_at,omitempty" toml:"deleted_at" yaml:"deleted_at,omitempty"`
-	SocialMedia    string    `boil:"social_media" json:"social_media" toml:"social_media" yaml:"social_media"`
 
 	R *kolR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L kolL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -46,24 +46,24 @@ var KolColumns = struct {
 	Email          string
 	Description    string
 	Sex            string
+	SocialMedia    string
 	Enable         string
 	UpdatedAdminID string
 	CreatedAt      string
 	UpdatedAt      string
 	DeletedAt      string
-	SocialMedia    string
 }{
 	ID:             "id",
 	Name:           "name",
 	Email:          "email",
 	Description:    "description",
 	Sex:            "sex",
+	SocialMedia:    "social_media",
 	Enable:         "enable",
 	UpdatedAdminID: "updated_admin_id",
 	CreatedAt:      "created_at",
 	UpdatedAt:      "updated_at",
 	DeletedAt:      "deleted_at",
-	SocialMedia:    "social_media",
 }
 
 var KolTableColumns = struct {
@@ -72,24 +72,24 @@ var KolTableColumns = struct {
 	Email          string
 	Description    string
 	Sex            string
+	SocialMedia    string
 	Enable         string
 	UpdatedAdminID string
 	CreatedAt      string
 	UpdatedAt      string
 	DeletedAt      string
-	SocialMedia    string
 }{
 	ID:             "kol.id",
 	Name:           "kol.name",
 	Email:          "kol.email",
 	Description:    "kol.description",
 	Sex:            "kol.sex",
+	SocialMedia:    "kol.social_media",
 	Enable:         "kol.enable",
 	UpdatedAdminID: "kol.updated_admin_id",
 	CreatedAt:      "kol.created_at",
 	UpdatedAt:      "kol.updated_at",
 	DeletedAt:      "kol.deleted_at",
-	SocialMedia:    "kol.social_media",
 }
 
 // Generated where
@@ -132,24 +132,24 @@ var KolWhere = struct {
 	Email          whereHelperstring
 	Description    whereHelperstring
 	Sex            whereHelperSex
+	SocialMedia    whereHelperstring
 	Enable         whereHelperbool
 	UpdatedAdminID whereHelperstring
 	CreatedAt      whereHelpertime_Time
 	UpdatedAt      whereHelpertime_Time
 	DeletedAt      whereHelpernull_Time
-	SocialMedia    whereHelperstring
 }{
 	ID:             whereHelperstring{field: "\"kol\".\"id\""},
 	Name:           whereHelperstring{field: "\"kol\".\"name\""},
 	Email:          whereHelperstring{field: "\"kol\".\"email\""},
 	Description:    whereHelperstring{field: "\"kol\".\"description\""},
 	Sex:            whereHelperSex{field: "\"kol\".\"sex\""},
+	SocialMedia:    whereHelperstring{field: "\"kol\".\"social_media\""},
 	Enable:         whereHelperbool{field: "\"kol\".\"enable\""},
 	UpdatedAdminID: whereHelperstring{field: "\"kol\".\"updated_admin_id\""},
 	CreatedAt:      whereHelpertime_Time{field: "\"kol\".\"created_at\""},
 	UpdatedAt:      whereHelpertime_Time{field: "\"kol\".\"updated_at\""},
 	DeletedAt:      whereHelpernull_Time{field: "\"kol\".\"deleted_at\""},
-	SocialMedia:    whereHelperstring{field: "\"kol\".\"social_media\""},
 }
 
 // KolRels is where relationship names are stored.
@@ -169,9 +169,9 @@ func (*kolR) NewStruct() *kolR {
 type kolL struct{}
 
 var (
-	kolAllColumns            = []string{"id", "name", "email", "description", "sex", "enable", "updated_admin_id", "created_at", "updated_at", "deleted_at", "social_media"}
-	kolColumnsWithoutDefault = []string{"name", "email", "description", "sex", "enable", "updated_admin_id"}
-	kolColumnsWithDefault    = []string{"id", "created_at", "updated_at", "deleted_at", "social_media"}
+	kolAllColumns            = []string{"id", "name", "email", "description", "sex", "social_media", "enable", "updated_admin_id", "created_at", "updated_at", "deleted_at"}
+	kolColumnsWithoutDefault = []string{"name", "email", "description", "sex", "social_media", "enable", "updated_admin_id"}
+	kolColumnsWithDefault    = []string{"id", "created_at", "updated_at", "deleted_at"}
 	kolPrimaryKeyColumns     = []string{"id"}
 	kolGeneratedColumns      = []string{}
 )

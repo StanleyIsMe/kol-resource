@@ -1,0 +1,62 @@
+CREATE TYPE "email_job_status" AS ENUM (
+    'pending',
+    'processing',
+    'success',
+    'partially_success',
+    'failed',
+    'canceled'
+);
+
+CREATE TYPE "email_log_status" AS ENUM (
+    'pending',
+    'success',
+    'failed'
+);
+
+CREATE TABLE "email_sender" (
+    "id" uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+    "name" varchar(255) NOT NULL,
+    "email" varchar(255) NOT NULL,
+    "key" varchar(255) NOT NULL,
+    "rate_limit" integer NOT NULL,
+    "last_send_at" timestamp NOT NULL,
+    "enabled" boolean NOT NULL DEFAULT TRUE,
+    "created_at" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (email)
+);
+
+CREATE TABLE "email_job" (
+    "id" bigserial PRIMARY KEY,
+    "expected_reciver_count" integer NOT NULL DEFAULT 0,
+    "success_count" integer NOT NULL DEFAULT 0,
+    "sender_id" uuid NOT NULL,
+    "sender_name" varchar(255) NOT NULL,
+    "sender_email" varchar(255) NOT NULL,
+    "admin_id" uuid NOT NULL,
+    "admin_name" varchar(255) NOT NULL,
+    "product_id" uuid NOT NULL,
+    "product_name" varchar(255) NOT NULL,
+    "memo" text NOT NULL,
+    "payload" jsonb NOT NULL DEFAULT '{}' ::jsonb,
+    "status" email_job_status NOT NULL,
+    "created_at" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "last_execute_at" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_status_created_at ON email_job(status,created_at);
+
+CREATE TABLE "email_log" (
+    "id" bigserial PRIMARY KEY,
+    "job_id" bigint NOT NULL,
+    "email" varchar(255) NOT NULL,
+    "kol_id" uuid NOT NULL,
+    "kol_name" varchar(255) NOT NULL,
+    "status" email_log_status NOT NULL,
+    "created_at" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (job_id,email)
+);
+
+CREATE INDEX IF NOT EXISTS idx_job_id_status ON email_log(job_id,status);

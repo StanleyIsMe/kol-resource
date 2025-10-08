@@ -5,6 +5,9 @@ package model
 
 var TableNames = struct {
 	Admin        string
+	EmailJob     string
+	EmailLog     string
+	EmailSender  string
 	Kol          string
 	KolTag       string
 	Product      string
@@ -12,6 +15,9 @@ var TableNames = struct {
 	Tag          string
 }{
 	Admin:        "admin",
+	EmailJob:     "email_job",
+	EmailLog:     "email_log",
+	EmailSender:  "email_sender",
 	Kol:          "kol",
 	KolTag:       "kol_tag",
 	Product:      "product",

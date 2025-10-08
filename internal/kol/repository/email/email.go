@@ -40,6 +40,7 @@ func (repo *Repository) SendEmail(ctx context.Context, param domain.SendEmailPar
 	if err != nil {
 		return fmt.Errorf("failed to dial mail server: %w", err)
 	}
+	sendCloser.Close()
 
 	emailImages := make([]MailImage, 0, len(param.Images))
 	for _, img := range param.Images {
@@ -97,7 +98,7 @@ func (repo *Repository) SendEmail(ctx context.Context, param domain.SendEmailPar
 				"toEmail": toEmail,
 			}).Msg("failed to send email")
 
-			return fmt.Errorf("failed to send email: %w", err)
+			// return fmt.Errorf("failed to send email: %w", err)
 		}
 
 		mailMsg.Reset()

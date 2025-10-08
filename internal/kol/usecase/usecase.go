@@ -14,12 +14,14 @@ type KolUseCase interface { //nolint:interfacebloat
 	DeleteKolByID(ctx context.Context, kolID uuid.UUID) error
 	UpdateKol(ctx context.Context, param UpdateKolParam) error
 	ListKols(ctx context.Context, param ListKolsParam) ([]*Kol, int, error)
+	ListKolEmailsByIDs(ctx context.Context, kolIDs []uuid.UUID) ([]*KolEmail, error)
 
 	BatchCreateKolsByXlsx(ctx context.Context, param BatchCreateKolsByXlsxParam) error
 	CreateTag(ctx context.Context, param CreateTagParam) error
 	ListTagsByName(ctx context.Context, name string) ([]*Tag, error)
 
 	CreateProduct(ctx context.Context, param CreateProductParam) error
+	GetProductByID(ctx context.Context, productID uuid.UUID) (*Product, error)
 	ListProductsByName(ctx context.Context, name string) ([]*Product, error)
 
 	SendEmail(ctx context.Context, param SendEmailParam) error
@@ -38,6 +40,12 @@ type Kol struct {
 type Tag struct {
 	ID   uuid.UUID `json:"id"`
 	Name string    `json:"name"`
+}
+
+type KolEmail struct {
+	ID   uuid.UUID `json:"id"`
+	Name string    `json:"name"`
+	Email string    `json:"email"`
 }
 
 type Product struct {
@@ -108,3 +116,4 @@ type SendEmailImage struct {
 	Data      string
 	ImageType string
 }
+

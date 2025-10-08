@@ -51,6 +51,106 @@ func makeCacheKey(cols boil.Columns, nzDefaults []string) string {
 	return str
 }
 
+type EmailJobStatus string
+
+// Enum values for EmailJobStatus
+const (
+	EmailJobStatusPending          EmailJobStatus = "pending"
+	EmailJobStatusProcessing       EmailJobStatus = "processing"
+	EmailJobStatusSuccess          EmailJobStatus = "success"
+	EmailJobStatusPartiallySuccess EmailJobStatus = "partially_success"
+	EmailJobStatusFailed           EmailJobStatus = "failed"
+	EmailJobStatusCanceled         EmailJobStatus = "canceled"
+)
+
+func AllEmailJobStatus() []EmailJobStatus {
+	return []EmailJobStatus{
+		EmailJobStatusPending,
+		EmailJobStatusProcessing,
+		EmailJobStatusSuccess,
+		EmailJobStatusPartiallySuccess,
+		EmailJobStatusFailed,
+		EmailJobStatusCanceled,
+	}
+}
+
+func (e EmailJobStatus) IsValid() error {
+	switch e {
+	case EmailJobStatusPending, EmailJobStatusProcessing, EmailJobStatusSuccess, EmailJobStatusPartiallySuccess, EmailJobStatusFailed, EmailJobStatusCanceled:
+		return nil
+	default:
+		return errors.New("enum is not valid")
+	}
+}
+
+func (e EmailJobStatus) String() string {
+	return string(e)
+}
+
+func (e EmailJobStatus) Ordinal() int {
+	switch e {
+	case EmailJobStatusPending:
+		return 0
+	case EmailJobStatusProcessing:
+		return 1
+	case EmailJobStatusSuccess:
+		return 2
+	case EmailJobStatusPartiallySuccess:
+		return 3
+	case EmailJobStatusFailed:
+		return 4
+	case EmailJobStatusCanceled:
+		return 5
+
+	default:
+		panic(errors.New("enum is not valid"))
+	}
+}
+
+type EmailLogStatus string
+
+// Enum values for EmailLogStatus
+const (
+	EmailLogStatusPending EmailLogStatus = "pending"
+	EmailLogStatusSuccess EmailLogStatus = "success"
+	EmailLogStatusFailed  EmailLogStatus = "failed"
+)
+
+func AllEmailLogStatus() []EmailLogStatus {
+	return []EmailLogStatus{
+		EmailLogStatusPending,
+		EmailLogStatusSuccess,
+		EmailLogStatusFailed,
+	}
+}
+
+func (e EmailLogStatus) IsValid() error {
+	switch e {
+	case EmailLogStatusPending, EmailLogStatusSuccess, EmailLogStatusFailed:
+		return nil
+	default:
+		return errors.New("enum is not valid")
+	}
+}
+
+func (e EmailLogStatus) String() string {
+	return string(e)
+}
+
+func (e EmailLogStatus) Ordinal() int {
+	switch e {
+	case EmailLogStatusPending:
+		return 0
+	case EmailLogStatusSuccess:
+		return 1
+	case EmailLogStatusFailed:
+		return 2
+
+	default:
+		panic(errors.New("enum is not valid"))
+	}
+}
+
 type Sex string
 
 // Enum values for Sex

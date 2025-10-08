@@ -306,3 +306,40 @@ func (uc *KolUseCaseImpl) SendEmail(ctx context.Context, param SendEmailParam) e
 
 	return nil
 }
+
+// ListKolEmailsByIDs is responsible for searching multiple kols by ids and return their emails.
+func (uc *KolUseCaseImpl) ListKolEmailsByIDs(ctx context.Context, kolIDs []uuid.UUID) ([]*KolEmail, error) {
+	kols, err := uc.repo.ListKolsByIDs(ctx, kolIDs)
+	if err != nil {
+		return nil, fmt.Errorf("repo.ListKolsByIDs error: %w", err)
+	}
+
+	kolsEmails := make([]*KolEmail, 0, len(kols))
+	for _, kol := range kols {
+		kolsEmails = append(kolsEmails, &KolEmail{
+			ID:    kol.ID,
+			Name:  kol.Name,
+			Email: kol.Email,
+		})
+	}
+
+	return kolsEmails, nil
+}
+
+// GetProductByID is responsible for getting a product by id.
+func (uc *KolUseCaseImpl) GetProductByID(ctx context.Context, productID uuid.UUID) (*Product, error) {
+	product, err := uc.repo.GetProductByID(ctx, productID)
+	if err != nil {
+		if errors.Is(err, domain.ErrDataNotFound) {
+			return nil, NotFoundError{resource: "product", id: productID.String()}
+		}
+
+		return nil, fmt.Errorf("repo.GetProductByID error: %w", err)
+	}
+
+	return &Product{
+		ID:          product.ID,
+		Name:        product.Name,
+		Description: product.Description,
+	}, nil
+}
