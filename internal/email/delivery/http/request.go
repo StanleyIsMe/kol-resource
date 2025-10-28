@@ -2,7 +2,10 @@ package http
 
 import (
 	"kolresource/internal/admin"
+	"kolresource/internal/common/handler"
+	"kolresource/internal/email"
 	"kolresource/internal/email/usecase"
+	"kolresource/pkg/transport/pager"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -14,6 +17,7 @@ type SendEmailRequest struct {
 	KolIDs       []uuid.UUID      `json:"kol_ids" binding:"required"`
 	ProductID    uuid.UUID        `json:"product_id" binding:"required"`
 	Images       []SendEmailImage `json:"images" binding:"dive"`
+	SenderID     uuid.UUID        `json:"sender_id" binding:"required"`
 }
 
 type SendEmailImage struct {
@@ -36,23 +40,71 @@ func (r *SendEmailRequest) ToUsecaseParam(c *gin.Context) usecase.SendEmailParam
 		Subject:          r.Subject,
 		EmailContent:     r.EmailContent,
 		KolIDs:           r.KolIDs,
-		UpdatedAdminID:   GetAdminIDFromContext(c),
+		UpdatedAdminID:   handler.GetAdminIDFromContext(c),
 		UpdatedAdminName: c.GetString(admin.AdminNameKey),
 		ProductID:        r.ProductID,
 		Images:           images,
+		SenderID:         r.SenderID,
 	}
 }
 
-func GetAdminIDFromContext(c *gin.Context) uuid.UUID {
-	adminID, ok := c.Get(admin.AdminIDKey)
-	if !ok {
-		return uuid.Nil
-	}
+type CreateEmailSenderRequest struct {
+	Name      string `json:"name" binding:"required,lte=50"`
+	Email     string `json:"email" binding:"required,email"`
+	Key       string `json:"key" binding:"required"`
+	RateLimit int    `json:"rate_limit" binding:"required,min=1"`
+}
 
-	adminUUID, ok := adminID.(uuid.UUID)
-	if !ok {
-		return uuid.Nil
+func (r *CreateEmailSenderRequest) ToUsecaseParam(c *gin.Context) usecase.CreateEmailSenderParam {
+	return usecase.CreateEmailSenderParam{
+		UpdatedAdminID:   handler.GetAdminIDFromContext(c),
+		UpdatedAdminName: c.GetString(admin.AdminNameKey),
+		Name:             r.Name,
+		Email:            r.Email,
+		Key:              r.Key,
+		RateLimit:        r.RateLimit,
 	}
+}
 
-	return adminUUID
+type UpdateEmailSenderRequest struct {
+	Name      string `json:"name" binding:"required,lte=50"`
+	Email     string `json:"email" binding:"required,email"`
+	Key       string `json:"key" binding:"required"`
+	RateLimit int    `json:"rate_limit" binding:"required,min=1"`
+}
+
+func (r *UpdateEmailSenderRequest) ToUsecaseParam(c *gin.Context, id uuid.UUID) usecase.UpdateEmailSenderParam {
+	return usecase.UpdateEmailSenderParam{
+		ID:             id,
+		Name:           r.Name,
+		Email:          r.Email,
+		Key:            r.Key,
+		RateLimit:      r.RateLimit,
+		UpdatedAdminID: handler.GetAdminIDFromContext(c),
+	}
+}
+
+type ListEmailSendersResponse struct {
+	EmailSenders []usecase.EmailSender `json:"email_senders"`
+	Total        int                   `json:"total"`
+}
+
+type ListEmailJobsRequest struct {
+	SenderID *string               `json:"sender_id"`
+	Status   *email.EmailJobStatus `json:"status"`
+	pager.Page
+}
+
+func (r *ListEmailJobsRequest) ToUsecaseParam() usecase.ListEmailJobsParam {
+	return usecase.ListEmailJobsParam{
+		SenderID: r.SenderID,
+		Status:   r.Status,
+		Page:     r.PageIndex,
+		PageSize: r.PageSize,
+	}
+}
+
+type GetEmailJobResponse struct {
+	EmailJob  usecase.EmailJob   `json:"email_job"`
+	EmailLogs []usecase.EmailLog `json:"email_logs"`
 }

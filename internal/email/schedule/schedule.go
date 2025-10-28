@@ -2,7 +2,6 @@ package schedule
 
 import (
 	"context"
-	"fmt"
 	"kolresource/internal/email/domain"
 	"time"
 
@@ -46,10 +45,10 @@ func (s *EmailSchedule) Start(ctx context.Context) {
 func (s *EmailSchedule) sendEmail(ctx context.Context) error {
 	// list email senders
 
-	emailSenders, err := s.repo.AllEmailSenders(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to get email senders: %w", err)
-	}
+	// emailSenders, err := s.repo.AllEmailSenders(ctx)
+	// if err != nil {
+	// 	return fmt.Errorf("failed to get email senders: %w", err)
+	// }
 
 	// calculate 24h period	 emails count
 	// get pending email job

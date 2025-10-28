@@ -10,7 +10,8 @@ CREATE TYPE "email_job_status" AS ENUM (
 CREATE TYPE "email_log_status" AS ENUM (
     'pending',
     'success',
-    'failed'
+    'failed',
+    'canceled'
 );
 
 CREATE TABLE "email_sender" (
@@ -18,8 +19,10 @@ CREATE TABLE "email_sender" (
     "name" varchar(255) NOT NULL,
     "email" varchar(255) NOT NULL,
     "key" varchar(255) NOT NULL,
+    "domain" varchar(255) NOT NULL,
     "rate_limit" integer NOT NULL,
     "last_send_at" timestamp NOT NULL,
+    "updated_admin_id" uuid NOT NULL,
     "enabled" boolean NOT NULL DEFAULT TRUE,
     "created_at" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -37,6 +40,7 @@ CREATE TABLE "email_job" (
     "admin_name" varchar(255) NOT NULL,
     "product_id" uuid NOT NULL,
     "product_name" varchar(255) NOT NULL,
+    "updated_admin_id" uuid NOT NULL,
     "memo" text NOT NULL,
     "payload" jsonb NOT NULL DEFAULT '{}' ::jsonb,
     "status" email_job_status NOT NULL,
@@ -50,13 +54,19 @@ CREATE INDEX IF NOT EXISTS idx_status_created_at ON email_job(status,created_at)
 CREATE TABLE "email_log" (
     "id" bigserial PRIMARY KEY,
     "job_id" bigint NOT NULL,
+    "product_id" uuid NOT NULL,
+    "sender_id" uuid NOT NULL,
     "email" varchar(255) NOT NULL,
+    "message_id" varchar(255) NOT NULL,
+    "reply" boolean NOT NULL DEFAULT TRUE,
     "kol_id" uuid NOT NULL,
     "kol_name" varchar(255) NOT NULL,
     "status" email_log_status NOT NULL,
+    "momo" text NOT NULL,
     "created_at" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE (job_id,email)
+    "sended_at" timestamp,
+    UNIQUE (product_id,email)
 );
 
 CREATE INDEX IF NOT EXISTS idx_job_id_status ON email_log(job_id,status);

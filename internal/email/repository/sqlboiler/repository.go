@@ -1,7 +1,6 @@
 package sqlboiler
 
 import (
-	"context"
 	"database/sql"
 	"kolresource/internal/email/domain"
 )
@@ -15,4 +14,3 @@ var _ domain.Repository = (*EmailRepository)(nil)
 func NewEmailRepository(db *sql.DB) *EmailRepository {
 	return &EmailRepository{db: db}
 }
-

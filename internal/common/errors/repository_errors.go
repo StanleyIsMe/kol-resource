@@ -3,9 +3,25 @@ package errors
 import (
 	"errors"
 	"fmt"
+
+	"github.com/lib/pq"
 )
 
 var ErrDataNotFound = errors.New("data not found")
+
+const (
+	UniqueViolationErrorCode = pq.ErrorCode("23505")
+)
+
+// func IsUniqueViolationError(err error) bool {
+// 	var perr *pgconn.PgError
+// 	if !errors.As(err, &perr) {
+// 		return false
+// 	}
+// 	sql.ErrNoRows
+// 	pq.ErrorCode(perr.Code)
+// 	return perr.Code == string(UniqueViolationErrorCode)
+// }
 
 type GenerateUUIDError struct {
 	Err error

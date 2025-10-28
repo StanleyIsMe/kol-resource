@@ -2,6 +2,8 @@ package sqlboiler
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	commonErrors "kolresource/internal/common/errors"
 	"kolresource/internal/email"
@@ -10,10 +12,10 @@ import (
 
 	model "kolresource/internal/db/sqlboiler"
 
+	"github.com/aarondl/sqlboiler/v4/queries/qm"
 	"github.com/google/uuid"
-	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 
-	"github.com/volatiletech/sqlboiler/v4/boil"
+	"github.com/aarondl/sqlboiler/v4/boil"
 )
 
 func (r *EmailRepository) CreateEmailJob(ctx context.Context, job *entities.EmailJob) (*entities.EmailJob, error) {
@@ -41,8 +43,42 @@ func (r *EmailRepository) CreateEmailJob(ctx context.Context, job *entities.Emai
 	return nil, nil
 }
 
-func (r *EmailRepository) UpdateEmailJob(ctx context.Context, job *entities.EmailJob) error {
+func (r *EmailRepository) UpdateEmailJobStats(ctx context.Context, id int64, status email.EmailJobStatus) error {
+	emailJobModel, err := model.EmailJobs(
+		qm.Where("id = ?", id),
+		qm.For("UPDATE"),
+	).One(ctx, r.getTx(ctx))
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return commonErrors.ErrDataNotFound
+		}
+
+		return commonErrors.QueryRecordError{Err: err}
+	}
+
+	emailJobModel.Status = model.EmailJobStatus(status)
+
+	_, err = emailJobModel.Update(ctx, r.getTx(ctx), boil.Infer())
+	if err != nil {
+		return commonErrors.UpdateRecordError{Err: err}
+	}
+
 	return nil
+}
+
+func (r *EmailRepository) GetEmailJobByID(ctx context.Context, id int64) (*entities.EmailJob, error) {
+	emailJobModel, err := model.EmailJobs(
+		qm.Where("id = ?", id),
+	).One(ctx, r.db)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, commonErrors.ErrDataNotFound
+		}
+
+		return nil, commonErrors.QueryRecordError{Err: err}
+	}
+
+	return r.newEmailJobFromModel(emailJobModel)
 }
 
 func (r *EmailRepository) GrabEmailJob(ctx context.Context, status email.EmailJobStatus) (*entities.EmailJob, error) {
@@ -57,35 +93,48 @@ func (r *EmailRepository) GrabEmailJob(ctx context.Context, status email.EmailJo
 	return r.newEmailJobFromModel(emailJobModel)
 }
 
-func (r *EmailRepository) ListEmailJobs(ctx context.Context, params *domain.ListEmailJobsParams) ([]*entities.EmailJob, error) {
+func (r *EmailRepository) ListEmailJobs(ctx context.Context, params *domain.ListEmailJobsParams) ([]*entities.EmailJob, int64, error) {
 	var qmMods []qm.QueryMod
 
 	if params.Status != nil {
 		qmMods = append(qmMods, qm.Where("status = ?", model.EmailJobStatus(*params.Status)))
 	}
 
+	if params.SenderID != nil {
+		senderID, err := uuid.Parse(*params.SenderID)
+		if err != nil {
+			return nil, 0, commonErrors.UUIDInvalidError{Field: "sender_id", UUID: *params.SenderID}
+		}
+		qmMods = append(qmMods, qm.Where("sender_id = ?", senderID.String()))
+	}
+
 	qmMods = append(qmMods,
-		qm.OrderBy("created_at DESC"),
-		qm.Offset(int(params.Page*params.Size)),
-		qm.Limit(int(params.Size)),
+		qm.OrderBy("updated_at DESC"),
+		qm.Offset(params.Page*params.Size),
+		qm.Limit(params.Size),
 	)
 
 	emailJobs, err := model.EmailJobs(qmMods...).All(ctx, r.db)
 	if err != nil {
-		return nil, commonErrors.QueryRecordError{Err: err}
+		return nil, 0, commonErrors.QueryRecordError{Err: err}
+	}
+
+	count, err := model.EmailJobs(qmMods...).Count(ctx, r.db)
+	if err != nil {
+		return nil, 0, commonErrors.QueryRecordError{Err: err}
 	}
 
 	emailJobsWithKols := make([]*entities.EmailJob, len(emailJobs))
 	for index, emailJob := range emailJobs {
 		emailJobWithKol, err := r.newEmailJobFromModel(emailJob)
 		if err != nil {
-			return nil, fmt.Errorf("failed to convert email job to entities: %w", err)
+			return nil, 0, fmt.Errorf("failed to convert email job to entities: %w", err)
 		}
 
 		emailJobsWithKols[index] = emailJobWithKol
 	}
 
-	return emailJobsWithKols, nil
+	return emailJobsWithKols, count, nil
 }
 
 func (r *EmailRepository) newEmailJobFromModel(emailJobModel *model.EmailJob) (*entities.EmailJob, error) {

@@ -43,8 +43,8 @@ type Tag struct {
 }
 
 type KolEmail struct {
-	ID   uuid.UUID `json:"id"`
-	Name string    `json:"name"`
+	ID    uuid.UUID `json:"id"`
+	Name  string    `json:"name"`
 	Email string    `json:"email"`
 }
 
@@ -116,4 +116,3 @@ type SendEmailImage struct {
 	Data      string
 	ImageType string
 }
-

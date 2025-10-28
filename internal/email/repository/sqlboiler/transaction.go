@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	commonErrors "kolresource/internal/common/errors"
 
-	"github.com/volatiletech/sqlboiler/v4/boil"
+	"github.com/aarondl/sqlboiler/v4/boil"
 )
 
 type contextKey string
@@ -42,6 +42,7 @@ func (r *EmailRepository) WithTx(ctx context.Context, fn func(ctx context.Contex
 	return nil
 }
 
+//nolint:ireturn
 func (r *EmailRepository) getTx(ctx context.Context) boil.ContextExecutor {
 	tx, ok := ctx.Value(CtxTransactionKey).(*sql.Tx)
 	if !ok {

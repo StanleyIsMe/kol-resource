@@ -1,0 +1,8 @@
+.git
+.gitignore
+.golangci.yaml
+Dockerfile
+.github
+.vscode
+.DS_Store
+deploy

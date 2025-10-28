@@ -8,10 +8,11 @@ import (
 
 	commonErrors "kolresource/internal/common/errors"
 	model "kolresource/internal/db/sqlboiler"
+	"kolresource/internal/email/domain"
 	"kolresource/internal/email/domain/entities"
 
-	"github.com/volatiletech/sqlboiler/v4/boil"
-	"github.com/volatiletech/sqlboiler/v4/queries/qm"
+	"github.com/aarondl/sqlboiler/v4/boil"
+	"github.com/aarondl/sqlboiler/v4/queries/qm"
 
 	"github.com/google/uuid"
 )
@@ -36,16 +37,22 @@ func (r *EmailRepository) AllEmailSenders(ctx context.Context) ([]*entities.Emai
 }
 
 func (r *EmailRepository) CreateEmailSender(ctx context.Context, sender *entities.EmailSender) error {
-	emailSenderModel := &model.EmailSender{
-		ID:         sender.ID.String(),
-		Name:       sender.Name,
-		Email:      sender.Email,
-		Key:        sender.Key,
-		RateLimit:  sender.RateLimit,
-		LastSendAt: sender.LastSendAt,
+	emailSenderUUID, err := uuid.NewV7()
+	if err != nil {
+		return commonErrors.GenerateUUIDError{Err: err}
 	}
 
-	err := emailSenderModel.Insert(ctx, r.db, boil.Infer())
+	emailSenderModel := &model.EmailSender{
+		ID:             emailSenderUUID.String(),
+		Name:           sender.Name,
+		Email:          sender.Email,
+		Key:            sender.Key,
+		RateLimit:      sender.RateLimit,
+		LastSendAt:     sender.LastSendAt,
+		UpdatedAdminID: sender.UpdatedAdminID.String(),
+	}
+
+	err = emailSenderModel.Insert(ctx, r.db, boil.Infer())
 	if err != nil {
 		return commonErrors.InsertRecordError{Err: err}
 	}
@@ -53,8 +60,8 @@ func (r *EmailRepository) CreateEmailSender(ctx context.Context, sender *entitie
 	return nil
 }
 
-func (r *EmailRepository) GetEmailSenderByID(ctx context.Context, id int64) (*entities.EmailSender, error) {
-	emailSenderModel, err := model.EmailSenders(qm.Where("id = ?", id)).One(ctx, r.db)
+func (r *EmailRepository) GetEmailSenderByID(ctx context.Context, id uuid.UUID) (*entities.EmailSender, error) {
+	emailSenderModel, err := model.EmailSenders(qm.Where("id = ?", id.String())).One(ctx, r.db)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, commonErrors.ErrDataNotFound
@@ -64,6 +71,30 @@ func (r *EmailRepository) GetEmailSenderByID(ctx context.Context, id int64) (*en
 	}
 
 	return r.newEmailSenderFromModel(emailSenderModel)
+}
+
+func (r *EmailRepository) UpdateEmailSender(ctx context.Context, param domain.UpdateEmailSenderParam) error {
+	emailSenderModel, err := model.EmailSenders(qm.Where("id = ?", param.ID.String())).One(ctx, r.db)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return commonErrors.ErrDataNotFound
+		}
+
+		return commonErrors.QueryRecordError{Err: err}
+	}
+
+	emailSenderModel.Name = param.Name
+	emailSenderModel.Email = param.Email
+	emailSenderModel.Key = param.Key
+	emailSenderModel.RateLimit = param.RateLimit
+	emailSenderModel.UpdatedAdminID = param.UpdatedAdminID.String()
+
+	_, err = emailSenderModel.Update(ctx, r.db, boil.Infer())
+	if err != nil {
+		return commonErrors.UpdateRecordError{Err: err}
+	}
+
+	return nil
 }
 
 func (r *EmailRepository) GetEmailSenderByEmail(ctx context.Context, email string) (*entities.EmailSender, error) {

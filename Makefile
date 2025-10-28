@@ -107,7 +107,7 @@ gen-migrate-sql:
 build: ## build docker image
 	docker buildx build \
 	-f Dockerfile \
-	-t stanleyhsieh/kol-resource-api:v1.2.0 \
+	-t $(PROJECT_NAME) \
 	--platform linux/amd64 \
 	--build-arg GO_VERSION=1.24.2 \
 	--build-arg GO_GOOS=linux \

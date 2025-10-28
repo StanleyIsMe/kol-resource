@@ -10,9 +10,9 @@ import (
 	"kolresource/internal/kol/domain"
 	"kolresource/internal/kol/domain/entities"
 
-	"github.com/volatiletech/null/v9"
-	"github.com/volatiletech/sqlboiler/v4/boil"
-	"github.com/volatiletech/sqlboiler/v4/queries/qm"
+	"github.com/aarondl/null/v8"
+	"github.com/aarondl/sqlboiler/v4/boil"
+	"github.com/aarondl/sqlboiler/v4/queries/qm"
 
 	"github.com/google/uuid"
 )
@@ -28,7 +28,8 @@ func NewKolRepository(db *sql.DB) *KolRepository {
 }
 
 func (repo *KolRepository) GetKolByID(ctx context.Context, id uuid.UUID) (*entities.Kol, error) {
-	kolModel, err := model.Kols(qm.Where("id = ?", id.String())).One(ctx, repo.db)
+	tt := qm.Where("id = ?", id.String())
+	kolModel, err := model.Kols(tt).One(ctx, repo.db)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, domain.ErrDataNotFound
