@@ -10,6 +10,7 @@ import (
 	adminUseCase "kolresource/internal/admin/usecase"
 	"kolresource/internal/api/middleware"
 	kolHTTP "kolresource/internal/kol/delivery/http"
+	emailHTTP "kolresource/internal/email/delivery/http"
 	"kolresource/internal/kol/repository/email"
 	kolRepo "kolresource/internal/kol/repository/sqlboiler"
 	kolUseCase "kolresource/internal/kol/usecase"
@@ -44,4 +45,5 @@ func (a *API) registerHTTPSvc(_ context.Context, dbStdConn *sql.DB) {
 	authRouter := httpRouter.Group("", middleware.JWT(adminUseCase))
 
 	kolHTTP.RegisterKolRoutes(authRouter, kolUseCase)
+	emailHTTP.RegisterEmailRoutes(authRouter, emailUseCase)
 }

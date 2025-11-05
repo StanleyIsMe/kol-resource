@@ -2,13 +2,17 @@ package sqlboiler
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	commonErrors "kolresource/internal/common/errors"
 	model "kolresource/internal/db/sqlboiler"
 	"kolresource/internal/email"
 	"kolresource/internal/email/domain"
 	"kolresource/internal/email/domain/entities"
+	"time"
 
+	"github.com/aarondl/null/v8"
 	"github.com/aarondl/sqlboiler/v4/boil"
 	"github.com/aarondl/sqlboiler/v4/queries/qm"
 	"github.com/google/uuid"
@@ -42,12 +46,64 @@ func (r *EmailRepository) BatchCreateEmailLogs(ctx context.Context, logs []*enti
 	return nil
 }
 
-func (r *EmailRepository) UpdateEmailLog(ctx context.Context, log *entities.EmailLog) error {
+func (r *EmailRepository) UpdateEmailLog(ctx context.Context, param domain.UpdateEmailLogParam) error {
+	emailLogModel, err := model.EmailLogs(
+		qm.Where("id = ?", param.ID),
+		qm.For("UPDATE"),
+	).One(ctx, r.getTx(ctx))
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return commonErrors.ErrDataNotFound
+		}
+
+		return commonErrors.QueryRecordError{Err: err}
+	}
+
+	if param.Status != nil {
+		emailLogModel.Status = model.EmailLogStatus(*param.Status)
+		emailLogModel.SendedAt = null.Time{Time: time.Now(), Valid: true}
+	}
+
+	if param.Memo != "" {
+		emailLogModel.Momo = param.Memo
+	}
+
+	if param.Reply != nil {
+		emailLogModel.Reply = *param.Reply
+	}
+
+	_, err = emailLogModel.Update(ctx, r.getTx(ctx), boil.Infer())
+	if err != nil {
+		return commonErrors.UpdateRecordError{Err: err}
+	}
+
 	return nil
 }
 
 func (r *EmailRepository) GetEmailLog(ctx context.Context, id int64) (*entities.EmailLog, error) {
-	return nil, nil
+	emailLogModel, err := model.EmailLogs(qm.Where("id = ?", id)).One(ctx, r.db)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, commonErrors.ErrDataNotFound
+		}
+
+		return nil, commonErrors.QueryRecordError{Err: err}
+	}
+
+	return r.newEmailLogFromModel(emailLogModel)
+}
+
+func (r *EmailRepository) GrabPendingEmailLogByJobID(ctx context.Context, jobID int64) (*entities.EmailLog, error) {
+	emailLogModel, err := model.EmailLogs(qm.Where("job_id = ? AND status = ?", jobID, model.EmailLogStatusPending)).One(ctx, r.getTx(ctx))
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, commonErrors.ErrDataNotFound
+		}
+
+		return nil, commonErrors.QueryRecordError{Err: err}
+	}
+
+	return r.newEmailLogFromModel(emailLogModel)
 }
 
 func (r *EmailRepository) ListEmailLogs(ctx context.Context, params *domain.ListEmailLogsParams) ([]*entities.EmailLog, error) {
@@ -75,6 +131,20 @@ func (r *EmailRepository) ListEmailLogs(ctx context.Context, params *domain.List
 	}
 
 	return emailLogEntities, nil
+}
+
+func (r *EmailRepository) CountSentEmailsLast24Hours(ctx context.Context, senderID uuid.UUID) (int64, error) {
+	query := []qm.QueryMod{
+		qm.Where("sender_id = ?", senderID.String()),
+		qm.Where("status = ?", model.EmailLogStatusSuccess),
+		qm.Where("sended_at >= ?", time.Now().Add(-24*time.Hour)),
+	}
+	count, err := model.EmailLogs(query...).Count(ctx, r.db)
+	if err != nil {
+		return 0, commonErrors.QueryRecordError{Err: err}
+	}
+
+	return count, nil
 }
 
 func (r *EmailRepository) newEmailLogFromModel(emailLogModel *model.EmailLog) (*entities.EmailLog, error) {

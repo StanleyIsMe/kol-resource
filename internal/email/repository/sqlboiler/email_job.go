@@ -13,6 +13,7 @@ import (
 	model "kolresource/internal/db/sqlboiler"
 
 	"github.com/aarondl/sqlboiler/v4/queries/qm"
+	"github.com/aarondl/sqlboiler/v4/types"
 	"github.com/google/uuid"
 
 	"github.com/aarondl/sqlboiler/v4/boil"
@@ -31,8 +32,8 @@ func (r *EmailRepository) CreateEmailJob(ctx context.Context, job *entities.Emai
 		ProductID:            job.ProductID.String(),
 		ProductName:          job.ProductName,
 		Memo:                 job.Memo,
-		// Payload:             job.Payload,
-		LastExecuteAt: job.LastExecuteAt,
+		Payload:              types.JSON(job.Payload),
+		LastExecuteAt:        job.LastExecuteAt,
 	}
 
 	err := emailJobModel.Insert(ctx, r.getTx(ctx), boil.Infer())
@@ -66,6 +67,29 @@ func (r *EmailRepository) UpdateEmailJobStats(ctx context.Context, id int64, sta
 	return nil
 }
 
+func (r *EmailRepository) UpdateEmailJob(ctx context.Context, param domain.UpdateEmailJobParam) error {
+	// emailJobModel, err := model.EmailJobs(
+	// 	qm.Where("id = ?", id),
+	// 	qm.For("UPDATE"),
+	// ).One(ctx, r.getTx(ctx))
+	// if err != nil {
+	// 	if errors.Is(err, sql.ErrNoRows) {
+	// 		return commonErrors.ErrDataNotFound
+	// 	}
+
+	// 	return commonErrors.QueryRecordError{Err: err}
+	// }
+
+	// emailJobModel.Status = model.EmailJobStatus(status)
+
+	// _, err = emailJobModel.Update(ctx, r.getTx(ctx), boil.Infer())
+	// if err != nil {
+	// 	return commonErrors.UpdateRecordError{Err: err}
+	// }
+
+	return nil
+}
+
 func (r *EmailRepository) GetEmailJobByID(ctx context.Context, id int64) (*entities.EmailJob, error) {
 	emailJobModel, err := model.EmailJobs(
 		qm.Where("id = ?", id),
@@ -81,16 +105,26 @@ func (r *EmailRepository) GetEmailJobByID(ctx context.Context, id int64) (*entit
 	return r.newEmailJobFromModel(emailJobModel)
 }
 
-func (r *EmailRepository) GrabEmailJob(ctx context.Context, status email.EmailJobStatus) (*entities.EmailJob, error) {
-	emailJobModel, err := model.EmailJobs(
-		qm.Where("status = ?", model.EmailJobStatus(status)),
+// GrabEmailJob grabs the email job with the status of pending or processing
+func (r *EmailRepository) GrabEmailJob(ctx context.Context) ([]*entities.EmailJob, error) {
+	emailJobModels, err := model.EmailJobs(
+		qm.WhereIn("status IN ?", []interface{}{model.EmailJobStatusPending, model.EmailJobStatusProcessing}),
 		qm.OrderBy("created_at ASC"),
-	).One(ctx, r.db)
+	).All(ctx, r.db)
 	if err != nil {
 		return nil, commonErrors.QueryRecordError{Err: err}
 	}
 
-	return r.newEmailJobFromModel(emailJobModel)
+	emailJobs := make([]*entities.EmailJob, len(emailJobModels))
+	for index, emailJobModel := range emailJobModels {
+		emailJob, err := r.newEmailJobFromModel(emailJobModel)
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert email job to entities: %w", err)
+		}
+		emailJobs[index] = emailJob
+	}
+
+	return emailJobs, nil
 }
 
 func (r *EmailRepository) ListEmailJobs(ctx context.Context, params *domain.ListEmailJobsParams) ([]*entities.EmailJob, int64, error) {
@@ -153,6 +187,11 @@ func (r *EmailRepository) newEmailJobFromModel(emailJobModel *model.EmailJob) (*
 		return nil, commonErrors.UUIDInvalidError{Field: "product_id", UUID: emailJobModel.ProductID}
 	}
 
+	updatedAdminID, err := uuid.Parse(emailJobModel.UpdatedAdminID)
+	if err != nil {
+		return nil, commonErrors.UUIDInvalidError{Field: "updated_admin_id", UUID: emailJobModel.UpdatedAdminID}
+	}
+
 	return &entities.EmailJob{
 		ID:                   emailJobModel.ID,
 		ExpectedReciverCount: emailJobModel.ExpectedReciverCount,
@@ -162,6 +201,7 @@ func (r *EmailRepository) newEmailJobFromModel(emailJobModel *model.EmailJob) (*
 		SenderID:             senderID,
 		SenderName:           emailJobModel.SenderName,
 		SenderEmail:          emailJobModel.SenderEmail,
+		UpdatedAdminID:       updatedAdminID,
 		ProductID:            productID,
 		ProductName:          emailJobModel.ProductName,
 		Memo:                 emailJobModel.Memo,

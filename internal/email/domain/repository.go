@@ -21,13 +21,19 @@ type Repository interface {
 	CreateEmailJob(ctx context.Context, job *entities.EmailJob) (*entities.EmailJob, error)
 	UpdateEmailJobStats(ctx context.Context, id int64, status email.EmailJobStatus) error
 	GetEmailJobByID(ctx context.Context, id int64) (*entities.EmailJob, error)
-	GrabEmailJob(ctx context.Context, status email.EmailJobStatus) (*entities.EmailJob, error)
+	GrabEmailJob(ctx context.Context) ([]*entities.EmailJob, error)
 	ListEmailJobs(ctx context.Context, params *ListEmailJobsParams) ([]*entities.EmailJob, int64, error)
 
 	BatchCreateEmailLogs(ctx context.Context, logs []*entities.EmailLog) error
-	UpdateEmailLog(ctx context.Context, log *entities.EmailLog) error
+	UpdateEmailLog(ctx context.Context, param UpdateEmailLogParam) error
 	GetEmailLog(ctx context.Context, id int64) (*entities.EmailLog, error)
 	ListEmailLogs(ctx context.Context, params *ListEmailLogsParams) ([]*entities.EmailLog, error)
+	GrabPendingEmailLogByJobID(ctx context.Context, jobID int64) (*entities.EmailLog, error)
+	CountSentEmailsLast24Hours(ctx context.Context, senderID uuid.UUID) (int64, error)
+}
+
+type EmailRepository interface {
+	SendEmail(ctx context.Context, param SendEmailParams) error
 }
 
 type UpdateEmailSenderParam struct {
@@ -56,6 +62,32 @@ type ListEmailJobsParams struct {
 }
 
 type UpdateEmailJobParam struct {
-	JobID  int64
-	Status email.EmailJobStatus
+	JobID        int64
+	Status       email.EmailJobStatus
+	SuccessCount int
+}
+
+type UpdateEmailLogParam struct {
+	ID     int64
+	Status *email.EmailLogStatus
+	Memo   string
+	Reply  *bool
+}
+
+type SendEmailParams struct {
+	Subject  string `json:"subject"`
+	Body     string `json:"body"`
+	ToEmails []ToEmail `json:"-"`
+	Images   []SendEmailImage `json:"images"`
+}
+
+type ToEmail struct {
+	Email string
+	Name  string
+}
+
+type SendEmailImage struct {
+	ContentID string `json:"content_id"`
+	Data      string `json:"data"`
+	ImageType string `json:"image_type"`
 }

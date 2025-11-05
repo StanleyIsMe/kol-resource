@@ -21,6 +21,16 @@ func NewEmailHandler(emailUsecase usecase.EmailUseCase) *EmailHandler {
 	return &EmailHandler{emailUsecase: emailUsecase}
 }
 
+// @Summary Create a new email sender
+// @Description Create a new email sender for sending emails
+// @Tags kol
+// @Accept json
+// @Produce json
+// @Param request body CreateEmailSenderRequest true "Create email sender request"
+// @Success 200 {object} nil "empty result"
+// @Failure 400 {object} nil "invalid request"
+// @Failure 500 {object} business.ErrorResponse "internal error"
+// @Router /api/v1/email_senders [post]
 func (h *EmailHandler) CreateEmailSender(c *gin.Context) {
 	ctx := c.Request.Context()
 
@@ -46,6 +56,15 @@ func (h *EmailHandler) CreateEmailSender(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{})
 }
 
+// @Summary List email senders
+// @Description List email senders
+// @Tags email
+// @Accept json
+// @Produce json
+// @Success 200 {object} ListEmailSendersResponse "Email senders list"
+// @Failure 400 {object} nil "invalid request"
+// @Failure 500 {object} business.ErrorResponse "internal error"
+// @Router /api/v1/email_senders [get]
 func (h *EmailHandler) ListEmailSenders(c *gin.Context) {
 	ctx := c.Request.Context()
 
@@ -66,6 +85,17 @@ func (h *EmailHandler) ListEmailSenders(c *gin.Context) {
 	})
 }
 
+// @Summary Update an email sender
+// @Description Update an email sender
+// @Tags email
+// @Accept json
+// @Produce json
+// @Param id path string true "Email sender ID"
+// @Param request body UpdateEmailSenderRequest true "Update email sender request"
+// @Success 200 {object} nil "empty result"
+// @Failure 400 {object} nil "invalid request"
+// @Failure 500 {object} business.ErrorResponse "internal error"
+// @Router /api/v1/email_senders/:id [put]
 func (h *EmailHandler) UpdateEmailSender(c *gin.Context) {
 	ctx := c.Request.Context()
 
@@ -98,6 +128,16 @@ func (h *EmailHandler) UpdateEmailSender(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{})
 }
 
+// @Summary Get an email sender by id
+// @Description Get an email sender by id
+// @Tags email
+// @Accept json
+// @Produce json
+// @Param id path string true "Email sender ID"
+// @Success 200 {object} usecase.EmailSender "Email sender details"
+// @Failure 400 {object} nil "invalid request"
+// @Failure 500 {object} business.ErrorResponse "internal error"
+// @Router /api/v1/email_senders/:id [get]
 func (h *EmailHandler) GetEmailSender(c *gin.Context) {
 	ctx := c.Request.Context()
 
@@ -126,6 +166,15 @@ func (h *EmailHandler) SendEmail(_ *gin.Context) {
 
 }
 
+// @Summary List email jobs
+// @Description List email jobs
+// @Tags email
+// @Accept json
+// @Produce json
+// @Success 200 {object} ListEmailJobsResponse "Email jobs list"
+// @Failure 400 {object} nil "invalid request"
+// @Failure 500 {object} business.ErrorResponse "internal error"
+// @Router /api/v1/email_jobs [get]
 func (h *EmailHandler) ListEmailJobs(c *gin.Context) {
 	ctx := c.Request.Context()
 
@@ -150,6 +199,16 @@ func (h *EmailHandler) ListEmailJobs(c *gin.Context) {
 	c.JSON(http.StatusOK, emailJobs)
 }
 
+// @Summary Get an email job by id
+// @Description Get an email job details, including email logs
+// @Tags email
+// @Accept json
+// @Produce json
+// @Param id path string true "Email job ID"
+// @Success 200 {object} GetEmailJobResponse "Email job details"
+// @Failure 400 {object} nil "invalid request"
+// @Failure 500 {object} business.ErrorResponse "internal error"
+// @Router /api/v1/email_jobs/:id [get]
 func (h *EmailHandler) GetEmailJob(c *gin.Context) {
 	ctx := c.Request.Context()
 
@@ -190,6 +249,16 @@ func (h *EmailHandler) GetEmailJob(c *gin.Context) {
 	})
 }
 
+// @Summary Cancel an email job
+// @Description Cancel an email job, only pending or processing jobs can be canceled
+// @Tags email
+// @Accept json
+// @Produce json
+// @Param id path string true "Email job ID"
+// @Success 200 {object} nil "empty result"
+// @Failure 400 {object} nil "invalid request"
+// @Failure 500 {object} business.ErrorResponse "internal error"
+// @Router /api/v1/email_jobs/:id/cancel [put]
 func (h *EmailHandler) CancelEmailJob(c *gin.Context) {
 	ctx := c.Request.Context()
 
@@ -213,6 +282,16 @@ func (h *EmailHandler) CancelEmailJob(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{})
 }
 
+// @Summary Start an email job
+// @Description Start an email job, only canceled jobs can be started
+// @Tags email
+// @Accept json
+// @Produce json
+// @Param id path string true "Email job ID"
+// @Success 200 {object} nil "empty result"
+// @Failure 400 {object} nil "invalid request"
+// @Failure 500 {object} business.ErrorResponse "internal error"
+// @Router /api/v1/email_jobs/:id/start [put]
 func (h *EmailHandler) StartEmailJob(c *gin.Context) {
 	ctx := c.Request.Context()
 

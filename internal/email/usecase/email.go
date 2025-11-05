@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -156,6 +157,25 @@ func (uc *EmailUseCaseImpl) SendEmail(ctx context.Context, param SendEmailParam)
 			Status:        email.EmailJobStatusPending,
 			LastExecuteAt: time.Now(),
 		}
+
+		payload := domain.SendEmailParams{
+			Subject: param.Subject,
+			Body:    param.EmailContent,
+			Images:  make([]domain.SendEmailImage, 0, len(param.Images)),
+		}
+		for _, image := range param.Images {
+			payload.Images = append(payload.Images, domain.SendEmailImage{
+				ContentID: image.ContentID,
+				Data:      image.Data,
+				ImageType: image.ImageType,
+			})
+		}
+
+		payloadBytes, err := json.Marshal(payload)
+		if err != nil {
+			return fmt.Errorf("json.Marshal error: %w", err)
+		}
+		job.Payload = string(payloadBytes)
 
 		emailJob, err := uc.repo.CreateEmailJob(ctx, job)
 		if err != nil {

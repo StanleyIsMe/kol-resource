@@ -14,7 +14,7 @@ type EmailSender struct {
 	ID             uuid.UUID `json:"id"`
 	Email          string    `json:"email"`
 	Name           string    `json:"name"`
-	Key            string    `json:"key"`
+	Key            string    `json:"-"`
 	RateLimit      int       `json:"rate_limit"`
 	Enabled        bool      `json:"enabled"`
 	UpdatedAdminID uuid.UUID `json:"updated_admin_id"`

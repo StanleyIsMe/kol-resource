@@ -27,3 +27,7 @@ const (
 	EmailLogStatusFailed   EmailLogStatus = "failed"
 	EmailLogStatusCanceled EmailLogStatus = "canceled"
 )
+
+func (s EmailLogStatus) ToPointer() *EmailLogStatus {
+	return &s
+}
