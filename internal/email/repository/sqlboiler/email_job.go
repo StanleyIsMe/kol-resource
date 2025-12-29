@@ -9,9 +9,12 @@ import (
 	"kolresource/internal/email"
 	"kolresource/internal/email/domain"
 	"kolresource/internal/email/domain/entities"
+	"strings"
+	"time"
 
 	model "kolresource/internal/db/sqlboiler"
 
+	"github.com/aarondl/sqlboiler/v4/queries"
 	"github.com/aarondl/sqlboiler/v4/queries/qm"
 	"github.com/aarondl/sqlboiler/v4/types"
 	"github.com/google/uuid"
@@ -68,24 +71,52 @@ func (r *EmailRepository) UpdateEmailJobStats(ctx context.Context, id int64, sta
 }
 
 func (r *EmailRepository) UpdateEmailJob(ctx context.Context, param domain.UpdateEmailJobParam) error {
-	// emailJobModel, err := model.EmailJobs(
-	// 	qm.Where("id = ?", id),
-	// 	qm.For("UPDATE"),
-	// ).One(ctx, r.getTx(ctx))
-	// if err != nil {
-	// 	if errors.Is(err, sql.ErrNoRows) {
-	// 		return commonErrors.ErrDataNotFound
-	// 	}
+	var (
+		setParts []string
+		args     []interface{}
+	)
 
-	// 	return commonErrors.QueryRecordError{Err: err}
-	// }
+	argIndex := 1
 
-	// emailJobModel.Status = model.EmailJobStatus(status)
+	if param.Status != nil {
+		setParts = append(setParts, fmt.Sprintf("status = $%d", argIndex))
+		args = append(args, model.EmailJobStatus(*param.Status))
+		argIndex++
+	}
 
-	// _, err = emailJobModel.Update(ctx, r.getTx(ctx), boil.Infer())
-	// if err != nil {
-	// 	return commonErrors.UpdateRecordError{Err: err}
-	// }
+	if param.IncreaseSuccessCount > 0 {
+		setParts = append(setParts, fmt.Sprintf("success_count = success_count + $%d", argIndex))
+		args = append(args, param.IncreaseSuccessCount)
+		argIndex++
+	}
+
+	setParts = append(setParts, fmt.Sprintf("last_execute_at = $%d", argIndex))
+	args = append(args, time.Now())
+	argIndex++
+
+	args = append(args, param.JobID)
+
+	query := fmt.Sprintf(
+		`UPDATE email_job 
+		 SET %s 
+		 WHERE id = $%d`,
+		strings.Join(setParts, ", "),
+		argIndex,
+	)
+
+	result, err := queries.Raw(query, args...).ExecContext(ctx, r.getTx(ctx))
+	if err != nil {
+		return commonErrors.UpdateRecordError{Err: err}
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return commonErrors.UpdateRecordError{Err: err}
+	}
+
+	if rowsAffected == 0 {
+		return commonErrors.ErrDataNotFound
+	}
 
 	return nil
 }
@@ -105,11 +136,29 @@ func (r *EmailRepository) GetEmailJobByID(ctx context.Context, id int64) (*entit
 	return r.newEmailJobFromModel(emailJobModel)
 }
 
+func (r *EmailRepository) GetEmailJobByIDForUpdate(ctx context.Context, id int64) (*entities.EmailJob, error) {
+	emailJobModel, err := model.EmailJobs(
+		qm.Where("id = ?", id),
+		qm.For("UPDATE"),
+	).One(ctx, r.getTx(ctx))
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, commonErrors.ErrDataNotFound
+		}
+
+		return nil, commonErrors.QueryRecordError{Err: err}
+	}
+
+	return r.newEmailJobFromModel(emailJobModel)
+}
+
 // GrabEmailJob grabs the email job with the status of pending or processing
 func (r *EmailRepository) GrabEmailJob(ctx context.Context) ([]*entities.EmailJob, error) {
 	emailJobModels, err := model.EmailJobs(
+		qm.Distinct("sender_id"),
 		qm.WhereIn("status IN ?", []interface{}{model.EmailJobStatusPending, model.EmailJobStatusProcessing}),
-		qm.OrderBy("created_at ASC"),
+		qm.OrderBy("sender_id, created_at ASC"),
+		qm.For("UPDATE SKIP LOCKED"),
 	).All(ctx, r.db)
 	if err != nil {
 		return nil, commonErrors.QueryRecordError{Err: err}

@@ -50,6 +50,7 @@ CREATE TABLE "email_job" (
 );
 
 CREATE INDEX IF NOT EXISTS idx_status_created_at ON email_job(status,created_at);
+CREATE INDEX IF NOT EXISTS idx_sender_id_created_at_status ON email_job(sender_id,created_at ASC) WHERE status IN ('pending', 'processing');
 
 CREATE TABLE "email_log" (
     "id" bigserial PRIMARY KEY,
@@ -70,3 +71,4 @@ CREATE TABLE "email_log" (
 );
 
 CREATE INDEX IF NOT EXISTS idx_job_id_status ON email_log(job_id,status);
+CREATE INDEX IF NOT EXISTS idx_sender_id_status_sended_at ON email_log(sender_id, status, sended_at) WHERE status = 'success';

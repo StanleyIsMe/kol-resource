@@ -12,7 +12,6 @@ import (
 	"kolresource/internal/email/domain/entities"
 	"time"
 
-	"github.com/aarondl/null/v8"
 	"github.com/aarondl/sqlboiler/v4/boil"
 	"github.com/aarondl/sqlboiler/v4/queries/qm"
 	"github.com/google/uuid"
@@ -39,7 +38,11 @@ func (r *EmailRepository) BatchCreateEmailLogs(ctx context.Context, logs []*enti
 
 		err := emailLogModel.Insert(ctx, tx, boil.Infer())
 		if err != nil {
-			return err
+			if commonErrors.IsUniqueViolationError(err) {
+				continue
+			}
+
+			return commonErrors.InsertRecordError{Err: err}
 		}
 	}
 
@@ -47,34 +50,34 @@ func (r *EmailRepository) BatchCreateEmailLogs(ctx context.Context, logs []*enti
 }
 
 func (r *EmailRepository) UpdateEmailLog(ctx context.Context, param domain.UpdateEmailLogParam) error {
-	emailLogModel, err := model.EmailLogs(
-		qm.Where("id = ?", param.ID),
-		qm.For("UPDATE"),
-	).One(ctx, r.getTx(ctx))
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return commonErrors.ErrDataNotFound
-		}
-
-		return commonErrors.QueryRecordError{Err: err}
-	}
+	// 构建更新字段的 map
+	cols := model.M{}
 
 	if param.Status != nil {
-		emailLogModel.Status = model.EmailLogStatus(*param.Status)
-		emailLogModel.SendedAt = null.Time{Time: time.Now(), Valid: true}
+		cols[model.EmailLogColumns.Status] = model.EmailLogStatus(*param.Status)
+		cols[model.EmailLogColumns.SendedAt] = time.Now()
 	}
 
 	if param.Memo != "" {
-		emailLogModel.Momo = param.Memo
+		cols[model.EmailLogColumns.Momo] = param.Memo
 	}
 
 	if param.Reply != nil {
-		emailLogModel.Reply = *param.Reply
+		cols[model.EmailLogColumns.Reply] = *param.Reply
 	}
 
-	_, err = emailLogModel.Update(ctx, r.getTx(ctx), boil.Infer())
+	if len(cols) == 0 {
+		return nil
+	}
+
+	rowsAffected, err := model.EmailLogs(qm.Where("id = ?", param.ID)).UpdateAll(ctx, r.getTx(ctx), cols)
+
 	if err != nil {
 		return commonErrors.UpdateRecordError{Err: err}
+	}
+
+	if rowsAffected == 0 {
+		return commonErrors.ErrDataNotFound
 	}
 
 	return nil
@@ -94,7 +97,10 @@ func (r *EmailRepository) GetEmailLog(ctx context.Context, id int64) (*entities.
 }
 
 func (r *EmailRepository) GrabPendingEmailLogByJobID(ctx context.Context, jobID int64) (*entities.EmailLog, error) {
-	emailLogModel, err := model.EmailLogs(qm.Where("job_id = ? AND status = ?", jobID, model.EmailLogStatusPending)).One(ctx, r.getTx(ctx))
+	emailLogModel, err := model.EmailLogs(
+		qm.Where("job_id = ? AND status = ?", jobID, model.EmailLogStatusPending),
+		qm.For("UPDATE SKIP LOCKED"),
+	).One(ctx, r.getTx(ctx))
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, commonErrors.ErrDataNotFound
@@ -104,6 +110,17 @@ func (r *EmailRepository) GrabPendingEmailLogByJobID(ctx context.Context, jobID 
 	}
 
 	return r.newEmailLogFromModel(emailLogModel)
+}
+		
+func (r *EmailRepository) CountPendingEmailLogsByJobID(ctx context.Context, jobID int64) (int64, error) {
+	count, err := model.EmailLogs(
+		qm.Where("job_id = ? AND status = ?", jobID, model.EmailLogStatusPending),
+	).Count(ctx, r.getTx(ctx))
+	if err != nil {
+		return 0, commonErrors.QueryRecordError{Err: err}
+	}
+
+	return count, nil
 }
 
 func (r *EmailRepository) ListEmailLogs(ctx context.Context, params *domain.ListEmailLogsParams) ([]*entities.EmailLog, error) {

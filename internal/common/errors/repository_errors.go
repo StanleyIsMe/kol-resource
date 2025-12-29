@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/lib/pq"
 )
 
@@ -13,15 +14,15 @@ const (
 	UniqueViolationErrorCode = pq.ErrorCode("23505")
 )
 
-// func IsUniqueViolationError(err error) bool {
-// 	var perr *pgconn.PgError
-// 	if !errors.As(err, &perr) {
-// 		return false
-// 	}
-// 	sql.ErrNoRows
-// 	pq.ErrorCode(perr.Code)
-// 	return perr.Code == string(UniqueViolationErrorCode)
-// }
+func IsUniqueViolationError(err error) bool {
+	var perr *pgconn.PgError
+	if !errors.As(err, &perr) {
+		return false
+	}
+	// sql.ErrNoRows
+	// pq.ErrorCode(perr.Code)
+	return perr.Code == string(UniqueViolationErrorCode)
+}
 
 type GenerateUUIDError struct {
 	Err error

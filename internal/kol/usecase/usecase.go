@@ -23,8 +23,6 @@ type KolUseCase interface { //nolint:interfacebloat
 	CreateProduct(ctx context.Context, param CreateProductParam) error
 	GetProductByID(ctx context.Context, productID uuid.UUID) (*Product, error)
 	ListProductsByName(ctx context.Context, name string) ([]*Product, error)
-
-	SendEmail(ctx context.Context, param SendEmailParam) error
 }
 
 type Kol struct {
@@ -99,20 +97,4 @@ type CreateProductParam struct {
 	Name           string    `json:"name"`
 	Description    string    `json:"description"`
 	UpdatedAdminID uuid.UUID `json:"updated_admin_id"`
-}
-
-type SendEmailParam struct {
-	Subject          string           `json:"subject"`
-	EmailContent     string           `json:"email_content"`
-	KolIDs           []uuid.UUID      `json:"kol_ids"`
-	ProductID        uuid.UUID        `json:"product_id"`
-	UpdatedAdminID   uuid.UUID        `json:"updated_admin_id"`
-	UpdatedAdminName string           `json:"updated_admin_name"`
-	Images           []SendEmailImage `json:"images"`
-}
-
-type SendEmailImage struct {
-	ContentID string
-	Data      string
-	ImageType string
 }

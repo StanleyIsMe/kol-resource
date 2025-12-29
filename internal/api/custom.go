@@ -9,9 +9,10 @@ import (
 	adminRepo "kolresource/internal/admin/repository"
 	adminUseCase "kolresource/internal/admin/usecase"
 	"kolresource/internal/api/middleware"
-	kolHTTP "kolresource/internal/kol/delivery/http"
 	emailHTTP "kolresource/internal/email/delivery/http"
-	"kolresource/internal/kol/repository/email"
+	EmailRepo "kolresource/internal/email/repository/sqlboiler"
+	emailUseCase "kolresource/internal/email/usecase"
+	kolHTTP "kolresource/internal/kol/delivery/http"
 	kolRepo "kolresource/internal/kol/repository/sqlboiler"
 	kolUseCase "kolresource/internal/kol/usecase"
 	pkgMiddleware "kolresource/pkg/transport/middleware"
@@ -30,8 +31,10 @@ func (a *API) registerHTTPSvc(_ context.Context, dbStdConn *sql.DB) {
 	adminUseCase := adminUseCase.NewAdminUseCaseImpl(adminRepository, a.cfg)
 
 	kolRepository := kolRepo.NewKolRepository(dbStdConn)
-	emailRepository := email.NewRepository(a.cfg)
-	kolUseCase := kolUseCase.NewKolUseCaseImpl(kolRepository, emailRepository)
+	emailRepository := EmailRepo.NewEmailRepository(dbStdConn)
+
+	kolUseCase := kolUseCase.NewKolUseCaseImpl(kolRepository)
+	emailUseCase := emailUseCase.NewEmailUseCaseImpl(emailRepository, kolUseCase)
 
 	httpRouter.Use(
 		middleware.Cors(),
@@ -40,10 +43,19 @@ func (a *API) registerHTTPSvc(_ context.Context, dbStdConn *sql.DB) {
 		pkgMiddleware.GinTimeout(defaultTimeout), //nolint:contextcheck
 	)
 
+	// admin domain
 	adminHTTP.RegisterAdminRoutes(httpRouter, adminUseCase)
 
 	authRouter := httpRouter.Group("", middleware.JWT(adminUseCase))
 
+	// kol domain
 	kolHTTP.RegisterKolRoutes(authRouter, kolUseCase)
-	emailHTTP.RegisterEmailRoutes(authRouter, emailUseCase)
+
+	// email domain
+	emailHTTP.RegisterEmailRoutes(authRouter, emailHTTP.RegisterEmailRoutesParams{
+		Router: authRouter,
+		Cfg: a.cfg,
+		EmailUsecase: emailUseCase,
+		EmailRepository: emailRepository,
+	})
 }

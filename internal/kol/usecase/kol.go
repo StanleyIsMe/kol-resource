@@ -6,20 +6,18 @@ import (
 	"fmt"
 
 	"kolresource/internal/kol/domain"
-	"kolresource/internal/kol/domain/entities"
 
 	"github.com/google/uuid"
 )
 
 type KolUseCaseImpl struct {
-	repo      domain.Repository
-	emailRepo domain.EmailRepository
+	repo domain.Repository
 }
 
 var _ KolUseCase = (*KolUseCaseImpl)(nil)
 
-func NewKolUseCaseImpl(repo domain.Repository, emailRepo domain.EmailRepository) *KolUseCaseImpl {
-	return &KolUseCaseImpl{repo: repo, emailRepo: emailRepo}
+func NewKolUseCaseImpl(repo domain.Repository) *KolUseCaseImpl {
+	return &KolUseCaseImpl{repo: repo}
 }
 
 // CreateKol is responsible for creating a new kol.
@@ -245,67 +243,67 @@ func (uc *KolUseCaseImpl) ListProductsByName(ctx context.Context, name string) (
 }
 
 // SendEmail is responsible for sending an email to multiple kols.
-func (uc *KolUseCaseImpl) SendEmail(ctx context.Context, param SendEmailParam) error {
-	product, err := uc.repo.GetProductByID(ctx, param.ProductID)
-	if err != nil {
-		if errors.Is(err, domain.ErrDataNotFound) {
-			return NotFoundError{resource: "product", id: param.ProductID.String()}
-		}
+// func (uc *KolUseCaseImpl) SendEmail(ctx context.Context, param SendEmailParam) error {
+// 	product, err := uc.repo.GetProductByID(ctx, param.ProductID)
+// 	if err != nil {
+// 		if errors.Is(err, domain.ErrDataNotFound) {
+// 			return NotFoundError{resource: "product", id: param.ProductID.String()}
+// 		}
 
-		return fmt.Errorf("repo.GetProductByID error: %w", err)
-	}
+// 		return fmt.Errorf("repo.GetProductByID error: %w", err)
+// 	}
 
-	kols, err := uc.repo.ListKolsByIDs(ctx, param.KolIDs)
-	if err != nil {
-		return fmt.Errorf("repo.ListKolsByIDs error: %w", err)
-	}
+// 	kols, err := uc.repo.ListKolsByIDs(ctx, param.KolIDs)
+// 	if err != nil {
+// 		return fmt.Errorf("repo.ListKolsByIDs error: %w", err)
+// 	}
 
-	if len(kols) == 0 {
-		return NotFoundError{resource: "kol", id: param.KolIDs}
-	}
+// 	if len(kols) == 0 {
+// 		return NotFoundError{resource: "kol", id: param.KolIDs}
+// 	}
 
-	sendEmailImages := make([]domain.SendEmailImage, 0, len(param.Images))
-	for _, img := range param.Images {
-		sendEmailImages = append(sendEmailImages, domain.SendEmailImage{
-			ContentID: img.ContentID,
-			Data:      img.Data,
-			ImageType: img.ImageType,
-		})
-	}
-	sendEmailParams := domain.SendEmailParams{
-		Subject:  param.Subject,
-		Body:     param.EmailContent,
-		ToEmails: make([]domain.ToEmail, 0, len(kols)),
-		Images:   sendEmailImages,
-	}
+// 	sendEmailImages := make([]domain.SendEmailImage, 0, len(param.Images))
+// 	for _, img := range param.Images {
+// 		sendEmailImages = append(sendEmailImages, domain.SendEmailImage{
+// 			ContentID: img.ContentID,
+// 			Data:      img.Data,
+// 			ImageType: img.ImageType,
+// 		})
+// 	}
+// 	sendEmailParams := domain.SendEmailParams{
+// 		Subject:  param.Subject,
+// 		Body:     param.EmailContent,
+// 		ToEmails: make([]domain.ToEmail, 0, len(kols)),
+// 		Images:   sendEmailImages,
+// 	}
 
-	for _, kol := range kols {
-		sendEmailParams.ToEmails = append(sendEmailParams.ToEmails, domain.ToEmail{
-			Email: kol.Email,
-			Name:  kol.Name,
-		})
-	}
+// 	for _, kol := range kols {
+// 		sendEmailParams.ToEmails = append(sendEmailParams.ToEmails, domain.ToEmail{
+// 			Email: kol.Email,
+// 			Name:  kol.Name,
+// 		})
+// 	}
 
-	if err := uc.emailRepo.SendEmail(ctx, sendEmailParams); err != nil {
-		return fmt.Errorf("emailRepo.SendEmail error: %w", err)
-	}
+// 	if err := uc.emailRepo.SendEmail(ctx, sendEmailParams); err != nil {
+// 		return fmt.Errorf("emailRepo.SendEmail error: %w", err)
+// 	}
 
-	for _, kol := range kols {
-		if _, err := uc.repo.CreateSendEmailLog(ctx, &entities.SendEmailLog{
-			AdminID:     param.UpdatedAdminID,
-			AdminName:   param.UpdatedAdminName,
-			KolID:       kol.ID,
-			KolName:     kol.Name,
-			Email:       kol.Email,
-			ProductID:   param.ProductID,
-			ProductName: product.Name,
-		}); err != nil {
-			return fmt.Errorf("repo.CreateSendEmailLog error: %w", err)
-		}
-	}
+// 	for _, kol := range kols {
+// 		if _, err := uc.repo.CreateSendEmailLog(ctx, &entities.SendEmailLog{
+// 			AdminID:     param.UpdatedAdminID,
+// 			AdminName:   param.UpdatedAdminName,
+// 			KolID:       kol.ID,
+// 			KolName:     kol.Name,
+// 			Email:       kol.Email,
+// 			ProductID:   param.ProductID,
+// 			ProductName: product.Name,
+// 		}); err != nil {
+// 			return fmt.Errorf("repo.CreateSendEmailLog error: %w", err)
+// 		}
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
 
 // ListKolEmailsByIDs is responsible for searching multiple kols by ids and return their emails.
 func (uc *KolUseCaseImpl) ListKolEmailsByIDs(ctx context.Context, kolIDs []uuid.UUID) ([]*KolEmail, error) {

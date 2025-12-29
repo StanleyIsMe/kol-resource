@@ -19,6 +19,10 @@ func (s EmailJobStatus) CanStart() bool {
 	return s == EmailJobStatusCanceled
 }
 
+func (s EmailJobStatus) ToPointer() *EmailJobStatus {
+	return &s
+}
+
 type EmailLogStatus string
 
 const (

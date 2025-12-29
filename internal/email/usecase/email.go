@@ -153,7 +153,6 @@ func (uc *EmailUseCaseImpl) SendEmail(ctx context.Context, param SendEmailParam)
 			SenderEmail:          emailSender.Email,
 			ProductID:            param.ProductID,
 			ProductName:          product.Name,
-			// Payload:              param.Payload, // TODO: email content + images
 			Status:        email.EmailJobStatusPending,
 			LastExecuteAt: time.Now(),
 		}

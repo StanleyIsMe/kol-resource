@@ -3,6 +3,7 @@ package http
 import (
 	"errors"
 	"fmt"
+	"kolresource/internal/email/schedule"
 	"kolresource/internal/email/usecase"
 	"kolresource/pkg/business"
 	"net/http"
@@ -14,11 +15,12 @@ import (
 )
 
 type EmailHandler struct {
-	emailUsecase usecase.EmailUseCase
+	emailUsecase  usecase.EmailUseCase
+	emailSchedule *schedule.EmailSchedule
 }
 
-func NewEmailHandler(emailUsecase usecase.EmailUseCase) *EmailHandler {
-	return &EmailHandler{emailUsecase: emailUsecase}
+func NewEmailHandler(emailUsecase usecase.EmailUseCase, emailSchedule *schedule.EmailSchedule) *EmailHandler {
+	return &EmailHandler{emailUsecase: emailUsecase, emailSchedule: emailSchedule}
 }
 
 // @Summary Create a new email sender
@@ -162,8 +164,38 @@ func (h *EmailHandler) GetEmailSender(c *gin.Context) {
 	c.JSON(http.StatusOK, emailSender)
 }
 
-func (h *EmailHandler) SendEmail(_ *gin.Context) {
+// @Summary Send email
+// @Description Send email
+// @Tags email
+// @Accept json
+// @Produce json
+// @Param request body SendEmailRequest true "Send email request"
+// @Success 200 {object} nil "empty result"
+// @Failure 400 {object} nil "invalid request"
+// @Failure 500 {object} business.ErrorResponse "internal error"
+// @Router /api/v1/email_jobs [post]
+func (h *EmailHandler) SendEmail(c *gin.Context) {
+	ctx := c.Request.Context()
 
+	var req SendEmailRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": errors.New("invalid request")})
+
+		return
+	}
+
+	if err := h.emailUsecase.SendEmail(ctx, req.ToUsecaseParam(c)); err != nil {
+		zerolog.Ctx(ctx).Error().Fields(map[string]any{
+			"payload": fmt.Sprintf("%+v", req),
+			"error":   err,
+		}).Msg("email send error")
+
+		c.JSON(business.UseCaesErrorToErrorResp(err))
+
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{})
 }
 
 // @Summary List email jobs
@@ -306,6 +338,22 @@ func (h *EmailHandler) StartEmailJob(c *gin.Context) {
 		zerolog.Ctx(ctx).Error().Fields(map[string]any{
 			"error": err,
 		}).Msg("email job start error")
+
+		c.JSON(business.UseCaesErrorToErrorResp(err))
+
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{})
+}
+
+func (h *EmailHandler) EmailScheduleDebug(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	if err := h.emailSchedule.SendEmailJob(ctx); err != nil {
+		zerolog.Ctx(ctx).Error().Fields(map[string]any{
+			"error": err,
+		}).Msg("email schedule send email error")
 
 		c.JSON(business.UseCaesErrorToErrorResp(err))
 

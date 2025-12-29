@@ -35,14 +35,14 @@ func (repo *Repository) SendEmail(ctx context.Context, param domain.SendEmailPar
 	dialer := gomail.NewDialer(
 		repo.cfg.CustomConfig.Email.ServerHost,
 		repo.cfg.CustomConfig.Email.ServerPort,
-		repo.cfg.CustomConfig.Email.AdminEmail,
-		repo.cfg.CustomConfig.Email.AdminPass,
+		param.SenderEmail,
+		param.SenderPwd,
 	)
 	sendCloser, err := dialer.Dial()
 	if err != nil {
 		return fmt.Errorf("failed to dial mail server: %w", err)
 	}
-	sendCloser.Close()
+	defer sendCloser.Close()
 
 	emailImages := make([]MailImage, 0, len(param.Images))
 	for _, img := range param.Images {
@@ -100,7 +100,7 @@ func (repo *Repository) SendEmail(ctx context.Context, param domain.SendEmailPar
 				"toEmail": toEmail,
 			}).Msg("failed to send email")
 
-			// return fmt.Errorf("failed to send email: %w", err)
+			return fmt.Errorf("failed to send email: %w", err)
 		}
 
 		mailMsg.Reset()
