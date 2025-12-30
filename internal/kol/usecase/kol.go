@@ -191,8 +191,9 @@ func (uc *KolUseCaseImpl) ListTagsByName(ctx context.Context, name string) ([]*T
 	tags := make([]*Tag, 0, len(tagEntities))
 	for _, tag := range tagEntities {
 		tags = append(tags, &Tag{
-			ID:   tag.ID,
-			Name: tag.Name,
+			ID:        tag.ID,
+			Name:      tag.Name,
+			CreatedAt: tag.CreatedAt,
 		})
 	}
 
@@ -236,6 +237,7 @@ func (uc *KolUseCaseImpl) ListProductsByName(ctx context.Context, name string) (
 			ID:          product.ID,
 			Name:        product.Name,
 			Description: product.Description,
+			CreatedAt:   product.CreatedAt,
 		})
 	}
 

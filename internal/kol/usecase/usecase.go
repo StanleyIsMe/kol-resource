@@ -4,6 +4,7 @@ import (
 	"context"
 	"kolresource/internal/kol"
 	"mime/multipart"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -36,8 +37,9 @@ type Kol struct {
 }
 
 type Tag struct {
-	ID   uuid.UUID `json:"id"`
-	Name string    `json:"name"`
+	ID        uuid.UUID `json:"id"`
+	Name      string    `json:"name"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 type KolEmail struct {
@@ -50,6 +52,7 @@ type Product struct {
 	ID          uuid.UUID `json:"id"`
 	Name        string    `json:"name"`
 	Description string    `json:"description"`
+	CreatedAt   time.Time `json:"created_at"`
 }
 
 type CreateKolParam struct {

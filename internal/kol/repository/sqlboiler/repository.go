@@ -732,6 +732,8 @@ func (repo *KolRepository) newKolFromModel(kolModel *model.Kol) (*entities.Kol, 
 		Sex:            sex,
 		Enable:         kolModel.Enable,
 		UpdatedAdminID: updateAdminUUID,
+		CreatedAt:      kolModel.CreatedAt,
+		UpdatedAt:      kolModel.UpdatedAt,
 	}, nil
 }
 
@@ -742,8 +744,9 @@ func (repo *KolRepository) newTagFromModel(tagModel *model.Tag) (*entities.Tag, 
 	}
 
 	return &entities.Tag{
-		ID:   tagUUID,
-		Name: tagModel.Name,
+		ID:        tagUUID,
+		Name:      tagModel.Name,
+		CreatedAt: tagModel.CreatedAt,
 	}, nil
 }
 
@@ -757,6 +760,7 @@ func (repo *KolRepository) newProductFromModel(productModel *model.Product) (*en
 		ID:          productUUID,
 		Name:        productModel.Name,
 		Description: productModel.Description,
+		CreatedAt:   productModel.CreatedAt,
 	}, nil
 }
 

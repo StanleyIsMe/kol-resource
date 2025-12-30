@@ -1,6 +1,6 @@
 module kolresource
 
-go 1.24.2
+go 1.24.11
 
 require (
 	github.com/aarondl/null/v8 v8.1.3
