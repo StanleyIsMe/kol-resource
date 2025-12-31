@@ -62,7 +62,7 @@ func (uc *EmailUseCaseImpl) ListEmailSenders(ctx context.Context) ([]EmailSender
 	}
 
 	emailSenders := make([]EmailSender, 0, len(entitiesEmailSenders))
-	for _, emailSender := range emailSenders {
+	for _, emailSender := range entitiesEmailSenders {
 		emailSenders = append(emailSenders, EmailSender{
 			ID:         emailSender.ID,
 			Name:       emailSender.Name,
