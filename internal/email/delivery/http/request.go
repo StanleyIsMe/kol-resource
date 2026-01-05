@@ -90,14 +90,18 @@ type ListEmailSendersResponse struct {
 }
 
 type ListEmailJobsRequest struct {
-	SenderID *string               `json:"sender_id"`
-	Status   *email.EmailJobStatus `json:"status"`
+	SenderEmail *string               `form:"sender_email,omitempty"`
+	SenderName  *string               `form:"sender_name,omitempty"`
+	ProductName *string               `form:"product_name,omitempty"`
+	Status      *email.EmailJobStatus `form:"status,omitempty"`
 	pager.Page
 }
 
 func (r *ListEmailJobsRequest) ToUsecaseParam() usecase.ListEmailJobsParam {
 	return usecase.ListEmailJobsParam{
-		SenderID: r.SenderID,
+		SenderEmail: r.SenderEmail,
+		SenderName:  r.SenderName,
+		ProductName: r.ProductName,
 		Status:   r.Status,
 		Page:     r.PageIndex,
 		PageSize: r.PageSize,

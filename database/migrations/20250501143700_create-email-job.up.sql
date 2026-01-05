@@ -59,7 +59,7 @@ CREATE TABLE "email_log" (
     "sender_id" uuid NOT NULL,
     "email" varchar(255) NOT NULL,
     "message_id" varchar(255) NOT NULL,
-    "reply" boolean NOT NULL DEFAULT TRUE,
+    "reply" boolean NOT NULL DEFAULT FALSE,
     "kol_id" uuid NOT NULL,
     "kol_name" varchar(255) NOT NULL,
     "status" email_log_status NOT NULL,

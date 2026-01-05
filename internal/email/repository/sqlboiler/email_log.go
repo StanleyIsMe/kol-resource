@@ -194,5 +194,6 @@ func (r *EmailRepository) newEmailLogFromModel(emailLogModel *model.EmailLog) (*
 		Memo:      emailLogModel.Momo,
 		CreatedAt: emailLogModel.CreatedAt,
 		UpdatedAt: emailLogModel.UpdatedAt,
+		SendedAt:  emailLogModel.SendedAt.Time,
 	}, nil
 }

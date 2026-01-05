@@ -24,7 +24,6 @@ import (
 
 func (r *EmailRepository) CreateEmailJob(ctx context.Context, job *entities.EmailJob) (*entities.EmailJob, error) {
 	emailJobModel := &model.EmailJob{
-		ID:                   job.ID,
 		ExpectedReciverCount: job.ExpectedReciverCount,
 		Status:               model.EmailJobStatus(job.Status),
 		AdminID:              job.AdminID.String(),
@@ -34,6 +33,7 @@ func (r *EmailRepository) CreateEmailJob(ctx context.Context, job *entities.Emai
 		SenderEmail:          job.SenderEmail,
 		ProductID:            job.ProductID.String(),
 		ProductName:          job.ProductName,
+		UpdatedAdminID:       job.UpdatedAdminID.String(),
 		Memo:                 job.Memo,
 		Payload:              types.JSON(job.Payload),
 		LastExecuteAt:        job.LastExecuteAt,
@@ -44,7 +44,7 @@ func (r *EmailRepository) CreateEmailJob(ctx context.Context, job *entities.Emai
 		return nil, commonErrors.InsertRecordError{Err: err}
 	}
 
-	return nil, nil
+	return r.newEmailJobFromModel(emailJobModel)
 }
 
 func (r *EmailRepository) UpdateEmailJobStats(ctx context.Context, id int64, status email.EmailJobStatus) error {
@@ -183,17 +183,26 @@ func (r *EmailRepository) ListEmailJobs(ctx context.Context, params *domain.List
 		qmMods = append(qmMods, qm.Where("status = ?", model.EmailJobStatus(*params.Status)))
 	}
 
-	if params.SenderID != nil {
-		senderID, err := uuid.Parse(*params.SenderID)
-		if err != nil {
-			return nil, 0, commonErrors.UUIDInvalidError{Field: "sender_id", UUID: *params.SenderID}
-		}
-		qmMods = append(qmMods, qm.Where("sender_id = ?", senderID.String()))
+	if params.SenderEmail != nil {
+		qmMods = append(qmMods, qm.Where("sender_email LIKE ?", "%"+*params.SenderEmail+"%"))
+	}
+
+	if params.SenderName != nil {
+		qmMods = append(qmMods, qm.Where("sender_name LIKE ?", "%"+*params.SenderName+"%"))
+	}
+
+	if params.ProductName != nil {
+		qmMods = append(qmMods, qm.Where("product_name LIKE ?", "%"+*params.ProductName+"%"))
+	}
+
+	count, err := model.EmailJobs(qmMods...).Count(ctx, r.db)
+	if err != nil {
+		return nil, 0, commonErrors.QueryRecordError{Err: err}
 	}
 
 	qmMods = append(qmMods,
 		qm.OrderBy("updated_at DESC"),
-		qm.Offset(params.Page*params.Size),
+		qm.Offset((params.Page-1)*params.Size),
 		qm.Limit(params.Size),
 	)
 
@@ -202,10 +211,7 @@ func (r *EmailRepository) ListEmailJobs(ctx context.Context, params *domain.List
 		return nil, 0, commonErrors.QueryRecordError{Err: err}
 	}
 
-	count, err := model.EmailJobs(qmMods...).Count(ctx, r.db)
-	if err != nil {
-		return nil, 0, commonErrors.QueryRecordError{Err: err}
-	}
+	
 
 	emailJobsWithKols := make([]*entities.EmailJob, len(emailJobs))
 	for index, emailJob := range emailJobs {

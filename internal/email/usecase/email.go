@@ -153,8 +153,9 @@ func (uc *EmailUseCaseImpl) SendEmail(ctx context.Context, param SendEmailParam)
 			SenderEmail:          emailSender.Email,
 			ProductID:            param.ProductID,
 			ProductName:          product.Name,
-			Status:        email.EmailJobStatusPending,
-			LastExecuteAt: time.Now(),
+			UpdatedAdminID:       param.UpdatedAdminID,
+			Status:               email.EmailJobStatusPending,
+			LastExecuteAt:        time.Now(),
 		}
 
 		payload := domain.SendEmailParams{
@@ -214,7 +215,9 @@ func (uc *EmailUseCaseImpl) SendEmail(ctx context.Context, param SendEmailParam)
 
 func (uc *EmailUseCaseImpl) ListEmailJobs(ctx context.Context, param ListEmailJobsParam) (*ListEmailJobsResponse, error) {
 	emailJobs, total, err := uc.repo.ListEmailJobs(ctx, &domain.ListEmailJobsParams{
-		SenderID: param.SenderID,
+		SenderEmail: param.SenderEmail,
+		SenderName:  param.SenderName,
+		ProductName: param.ProductName,
 		Status:   param.Status,
 		Page:     param.Page,
 		Size:     param.PageSize,
@@ -303,7 +306,8 @@ func (uc *EmailUseCaseImpl) ListEmailLogs(ctx context.Context, param ListEmailLo
 			KolID:     emailLog.KolID,
 			KolName:   emailLog.KolName,
 			Status:    emailLog.Status,
-			UpdatedAt: emailLog.UpdatedAt,
+			Memo:      emailLog.Memo,
+			SendedAt:  emailLog.SendedAt,
 		})
 	}
 

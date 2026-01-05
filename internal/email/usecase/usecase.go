@@ -65,10 +65,12 @@ type SendEmailImage struct {
 }
 
 type ListEmailJobsParam struct {
-	SenderID *string
-	Status   *email.EmailJobStatus
-	Page     int
-	PageSize int
+	SenderEmail *string
+	SenderName  *string
+	ProductName *string
+	Status      *email.EmailJobStatus
+	Page        int
+	PageSize    int
 }
 
 type ListEmailJobsResponse struct {
@@ -106,6 +108,6 @@ type EmailLog struct {
 	KolID     uuid.UUID            `json:"kol_id"`
 	KolName   string               `json:"kol_name"`
 	Status    email.EmailLogStatus `json:"status"`
-	UpdatedAt time.Time            `json:"updated_at"`
+	Memo      string               `json:"memo"`
 	SendedAt  time.Time            `json:"sended_at"`
 }

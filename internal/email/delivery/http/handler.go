@@ -211,7 +211,7 @@ func (h *EmailHandler) ListEmailJobs(c *gin.Context) {
 	ctx := c.Request.Context()
 
 	var req ListEmailJobsRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := c.ShouldBindQuery(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": errors.New("invalid request")})
 
 		return

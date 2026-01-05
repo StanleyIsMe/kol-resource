@@ -58,10 +58,12 @@ type ListEmailLogsParams struct {
 }
 
 type ListEmailJobsParams struct {
-	SenderID *string
-	Status   *email.EmailJobStatus
-	Page     int
-	Size     int
+	SenderEmail *string
+	SenderName  *string
+	ProductName *string
+	Status      *email.EmailJobStatus
+	Page        int
+	Size        int
 }
 
 type UpdateEmailJobParam struct {
