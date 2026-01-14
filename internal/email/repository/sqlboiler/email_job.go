@@ -154,12 +154,21 @@ func (r *EmailRepository) GetEmailJobByIDForUpdate(ctx context.Context, id int64
 
 // GrabEmailJob grabs the email job with the status of pending or processing
 func (r *EmailRepository) GrabEmailJob(ctx context.Context) ([]*entities.EmailJob, error) {
-	emailJobModels, err := model.EmailJobs(
-		qm.Distinct("sender_id"),
-		qm.WhereIn("status IN ?", []interface{}{model.EmailJobStatusPending, model.EmailJobStatusProcessing}),
-		qm.OrderBy("sender_id, created_at ASC"),
-		qm.For("UPDATE SKIP LOCKED"),
-	).All(ctx, r.db)
+	query := `
+		WITH ranked AS (
+			SELECT *,
+				ROW_NUMBER() OVER (PARTITION BY sender_id ORDER BY created_at ASC) AS rn
+			FROM email_job
+			WHERE status IN ('pending', 'processing')
+		)
+		SELECT * 
+		FROM ranked
+		WHERE rn = 1
+		FOR UPDATE SKIP LOCKED;
+	`
+	
+	var emailJobModels []*model.EmailJob
+	err := queries.Raw(query).Bind(ctx, r.db, &emailJobModels)
 	if err != nil {
 		return nil, commonErrors.QueryRecordError{Err: err}
 	}
@@ -211,8 +220,6 @@ func (r *EmailRepository) ListEmailJobs(ctx context.Context, params *domain.List
 		return nil, 0, commonErrors.QueryRecordError{Err: err}
 	}
 
-	
-
 	emailJobsWithKols := make([]*entities.EmailJob, len(emailJobs))
 	for index, emailJob := range emailJobs {
 		emailJobWithKol, err := r.newEmailJobFromModel(emailJob)
@@ -250,6 +257,7 @@ func (r *EmailRepository) newEmailJobFromModel(emailJobModel *model.EmailJob) (*
 	return &entities.EmailJob{
 		ID:                   emailJobModel.ID,
 		ExpectedReciverCount: emailJobModel.ExpectedReciverCount,
+		SuccessCount:         emailJobModel.SuccessCount,
 		Status:               email.EmailJobStatus(emailJobModel.Status),
 		AdminID:              adminID,
 		AdminName:            emailJobModel.AdminName,

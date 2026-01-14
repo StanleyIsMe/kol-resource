@@ -41,10 +41,10 @@ type EmailRepository interface {
 
 type UpdateEmailSenderParam struct {
 	ID             uuid.UUID `json:"id"`
-	Name           string    `json:"name"`
-	Email          string    `json:"email"`
-	Key            string    `json:"key"`
-	RateLimit      int       `json:"rate_limit"`
+	Name           *string    `json:"name"`
+	Email          *string    `json:"email"`
+	Key            *string    `json:"key"`
+	RateLimit      *int       `json:"rate_limit"`
 	UpdatedAdminID uuid.UUID `json:"updated_admin_id"`
 }
 
@@ -84,6 +84,7 @@ type SendEmailParams struct {
 	Body        string           `json:"body"`
 	ToEmails    []ToEmail        `json:"-"`
 	Images      []SendEmailImage `json:"images"`
+	SenderName  string           `json:"-"`
 	SenderEmail string           `json:"-"`
 	SenderPwd   string           `json:"-"`
 }

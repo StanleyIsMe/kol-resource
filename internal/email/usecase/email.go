@@ -34,7 +34,10 @@ func (uc *EmailUseCaseImpl) CreateEmailSender(ctx context.Context, param CreateE
 	}
 
 	if existEmailSender != nil {
-		return fmt.Errorf("email sender already exists")
+		return commonErrors.DuplicatedResourceError{
+			Resource: "email sender",
+			Name:     param.Email,
+		}
 	}
 
 	emailSender := &entities.EmailSender{

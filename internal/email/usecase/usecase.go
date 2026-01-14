@@ -32,10 +32,10 @@ type CreateEmailSenderParam struct {
 
 type UpdateEmailSenderParam struct {
 	ID             uuid.UUID `json:"id"`
-	Name           string    `json:"name"`
-	Email          string    `json:"email"`
-	Key            string    `json:"key"`
-	RateLimit      int       `json:"rate_limit"`
+	Name           *string   `json:"name"`
+	Email          *string   `json:"email"`
+	Key            *string   `json:"key"`
+	RateLimit      *int      `json:"rate_limit"`
 	UpdatedAdminID uuid.UUID `json:"updated_admin_id"`
 }
 

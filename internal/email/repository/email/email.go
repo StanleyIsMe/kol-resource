@@ -72,7 +72,7 @@ func (repo *Repository) SendEmail(ctx context.Context, param domain.SendEmailPar
 
 	mailMsg := gomail.NewMessage(gomail.SetEncoding(gomail.Base64))
 	for _, toEmail := range param.ToEmails {
-		mailMsg.SetHeader("From", mailMsg.FormatAddress(repo.cfg.CustomConfig.Email.AdminEmail, repo.cfg.CustomConfig.Email.AdminName))
+		mailMsg.SetHeader("From", mailMsg.FormatAddress(param.SenderEmail, param.SenderName))
 		mailMsg.SetAddressHeader("To", toEmail.Email, toEmail.Name)
 		mailMsg.SetHeader("Subject", param.Subject)
 		mailMsg.SetHeader("To", toEmail.Email)

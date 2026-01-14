@@ -174,6 +174,7 @@ func (s *EmailSchedule) executeJob(
 				},
 			},
 			Images:      emailPayload.Images,
+			SenderName:  emailSender.Name,
 			SenderEmail: emailSender.Email,
 			SenderPwd:   emailSender.Key,
 		})

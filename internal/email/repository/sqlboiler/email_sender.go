@@ -83,10 +83,29 @@ func (r *EmailRepository) UpdateEmailSender(ctx context.Context, param domain.Up
 		return commonErrors.QueryRecordError{Err: err}
 	}
 
-	emailSenderModel.Name = param.Name
-	emailSenderModel.Email = param.Email
-	emailSenderModel.Key = param.Key
-	emailSenderModel.RateLimit = param.RateLimit
+	isEdited := false
+
+	if param.Name != nil {
+		emailSenderModel.Name = *param.Name
+		isEdited = true
+	}
+	if param.Email != nil {
+		emailSenderModel.Email = *param.Email
+		isEdited = true
+	}
+	if param.Key != nil {
+		emailSenderModel.Key = *param.Key
+		isEdited = true
+	}
+	if param.RateLimit != nil {
+		emailSenderModel.RateLimit = *param.RateLimit
+		isEdited = true
+	}
+
+	if !isEdited {
+		return nil
+	}
+	
 	emailSenderModel.UpdatedAdminID = param.UpdatedAdminID.String()
 
 	_, err = emailSenderModel.Update(ctx, r.db, boil.Infer())

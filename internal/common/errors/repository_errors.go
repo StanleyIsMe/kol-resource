@@ -19,8 +19,7 @@ func IsUniqueViolationError(err error) bool {
 	if !errors.As(err, &perr) {
 		return false
 	}
-	// sql.ErrNoRows
-	// pq.ErrorCode(perr.Code)
+
 	return perr.Code == string(UniqueViolationErrorCode)
 }
 

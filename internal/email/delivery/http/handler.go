@@ -102,20 +102,25 @@ func (h *EmailHandler) UpdateEmailSender(c *gin.Context) {
 	ctx := c.Request.Context()
 
 	var req UpdateEmailSenderRequest
+	if err := c.ShouldBindUri(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": errors.New("invalid uri param")})
+		
+		return
+	}
+
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": errors.New("invalid request")})
-
+		
 		return
 	}
 
-	id, err := uuid.Parse(c.Param("id"))
+	ucParam, err := req.ToUsecaseParam(c)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": errors.New("invalid request")})
-
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		
 		return
 	}
 
-	ucParam := req.ToUsecaseParam(c, id)
 	if err := h.emailUsecase.UpdateEmailSender(ctx, ucParam); err != nil {
 		zerolog.Ctx(ctx).Error().Fields(map[string]any{
 			"payload": fmt.Sprintf("%+v", req),

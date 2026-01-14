@@ -1,6 +1,7 @@
 package http
 
 import (
+	"fmt"
 	"kolresource/internal/admin"
 	"kolresource/internal/common/handler"
 	"kolresource/internal/email"
@@ -67,13 +68,19 @@ func (r *CreateEmailSenderRequest) ToUsecaseParam(c *gin.Context) usecase.Create
 }
 
 type UpdateEmailSenderRequest struct {
-	Name      string `json:"name" binding:"required,lte=50"`
-	Email     string `json:"email" binding:"required,email"`
-	Key       string `json:"key" binding:"required"`
-	RateLimit int    `json:"rate_limit" binding:"required,min=1"`
+	ID        string  `uri:"id" binding:"required,uuid"`
+	Name      *string `json:"name,omitempty" binding:"omitempty,lte=50"`
+	Email     *string `json:"email,omitempty" binding:"omitempty,email"`
+	Key       *string `json:"key,omitempty" binding:"omitempty,lte=255"`
+	RateLimit *int    `json:"rate_limit,omitempty" binding:"omitempty,min=1"`
 }
 
-func (r *UpdateEmailSenderRequest) ToUsecaseParam(c *gin.Context, id uuid.UUID) usecase.UpdateEmailSenderParam {
+func (r *UpdateEmailSenderRequest) ToUsecaseParam(c *gin.Context) (usecase.UpdateEmailSenderParam, error) {
+	id, err := uuid.Parse(r.ID)
+	if err != nil {
+		return usecase.UpdateEmailSenderParam{}, fmt.Errorf("invalid uuid: %w", err)
+	}
+
 	return usecase.UpdateEmailSenderParam{
 		ID:             id,
 		Name:           r.Name,
@@ -81,7 +88,7 @@ func (r *UpdateEmailSenderRequest) ToUsecaseParam(c *gin.Context, id uuid.UUID) 
 		Key:            r.Key,
 		RateLimit:      r.RateLimit,
 		UpdatedAdminID: handler.GetAdminIDFromContext(c),
-	}
+	}, nil
 }
 
 type ListEmailSendersResponse struct {
@@ -102,9 +109,9 @@ func (r *ListEmailJobsRequest) ToUsecaseParam() usecase.ListEmailJobsParam {
 		SenderEmail: r.SenderEmail,
 		SenderName:  r.SenderName,
 		ProductName: r.ProductName,
-		Status:   r.Status,
-		Page:     r.PageIndex,
-		PageSize: r.PageSize,
+		Status:      r.Status,
+		Page:        r.PageIndex,
+		PageSize:    r.PageSize,
 	}
 }
 
