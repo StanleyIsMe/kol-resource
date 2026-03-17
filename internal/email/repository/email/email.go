@@ -6,12 +6,14 @@ import (
 	"fmt"
 	"io"
 	apiCfg "kolresource/internal/api/config"
-	"kolresource/internal/kol/domain"
+	"kolresource/internal/email/domain"
 	"kolresource/pkg/config"
 
 	"github.com/rs/zerolog"
 	"gopkg.in/gomail.v2"
 )
+
+var _ domain.EmailRepository = (*Repository)(nil)
 
 type Repository struct {
 	cfg *config.Config[apiCfg.Config]
@@ -33,13 +35,14 @@ func (repo *Repository) SendEmail(ctx context.Context, param domain.SendEmailPar
 	dialer := gomail.NewDialer(
 		repo.cfg.CustomConfig.Email.ServerHost,
 		repo.cfg.CustomConfig.Email.ServerPort,
-		repo.cfg.CustomConfig.Email.AdminEmail,
-		repo.cfg.CustomConfig.Email.AdminPass,
+		param.SenderEmail,
+		param.SenderPwd,
 	)
 	sendCloser, err := dialer.Dial()
 	if err != nil {
 		return fmt.Errorf("failed to dial mail server: %w", err)
 	}
+	defer sendCloser.Close()
 
 	emailImages := make([]MailImage, 0, len(param.Images))
 	for _, img := range param.Images {
@@ -69,7 +72,7 @@ func (repo *Repository) SendEmail(ctx context.Context, param domain.SendEmailPar
 
 	mailMsg := gomail.NewMessage(gomail.SetEncoding(gomail.Base64))
 	for _, toEmail := range param.ToEmails {
-		mailMsg.SetHeader("From", mailMsg.FormatAddress(repo.cfg.CustomConfig.Email.AdminEmail, repo.cfg.CustomConfig.Email.AdminName))
+		mailMsg.SetHeader("From", mailMsg.FormatAddress(param.SenderEmail, param.SenderName))
 		mailMsg.SetAddressHeader("To", toEmail.Email, toEmail.Name)
 		mailMsg.SetHeader("Subject", param.Subject)
 		mailMsg.SetHeader("To", toEmail.Email)

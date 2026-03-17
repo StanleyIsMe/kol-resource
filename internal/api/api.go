@@ -10,8 +10,8 @@ import (
 	"kolresource/pkg/config"
 	"kolresource/pkg/shutdown"
 
+	"github.com/aarondl/sqlboiler/v4/boil"
 	"github.com/rs/zerolog"
-	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
 type API struct {

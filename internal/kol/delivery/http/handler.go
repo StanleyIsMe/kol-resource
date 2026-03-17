@@ -379,37 +379,3 @@ func (h *KolHandler) ListProducts(c *gin.Context) {
 
 	c.JSON(http.StatusOK, products)
 }
-
-// @Summary Send email
-// @Description Send email
-// @Tags email
-// @Accept json
-// @Produce json
-// @Param request body SendEmailRequest true "Send email request"
-// @Success 200 {object} nil "empty result"
-// @Failure 400 {object} nil "invalid request"
-// @Failure 500 {object} business.ErrorResponse "internal error"
-// @Router /api/v1/email [post]
-func (h *KolHandler) SendEmail(c *gin.Context) {
-	ctx := c.Request.Context()
-
-	var req SendEmailRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": errors.New("invalid request")})
-
-		return
-	}
-
-	if err := h.uc.SendEmail(ctx, req.ToUsecaseParam(c)); err != nil {
-		zerolog.Ctx(ctx).Error().Fields(map[string]any{
-			"payload": fmt.Sprintf("%+v", req),
-			"error":   err,
-		}).Msg("email send error")
-
-		c.JSON(business.UseCaesErrorToErrorResp(err))
-
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{})
-}

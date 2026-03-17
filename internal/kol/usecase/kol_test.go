@@ -136,7 +136,7 @@ func TestKolUseCaseImpl_CreateKol(t *testing.T) {
 			ctrl := gomock.NewController(t)
 
 			repoMock := tt.getRepoMock(ctrl)
-			uc := NewKolUseCaseImpl(repoMock, nil)
+			uc := NewKolUseCaseImpl(repoMock)
 
 			err := uc.CreateKol(context.Background(), tt.args)
 			if (err != nil) != tt.wantErr {
@@ -235,7 +235,7 @@ func TestKolUseCaseImpl_GetKolByID(t *testing.T) {
 			ctrl := gomock.NewController(t)
 
 			repoMock := tt.getRepoMock(ctrl)
-			uc := NewKolUseCaseImpl(repoMock, nil)
+			uc := NewKolUseCaseImpl(repoMock)
 
 			got, err := uc.GetKolByID(context.Background(), tt.args)
 			if (err != nil) != tt.wantErr {
@@ -333,7 +333,7 @@ func TestKolUseCaseImpl_UpdateKol(t *testing.T) {
 			ctrl := gomock.NewController(t)
 
 			repoMock := tt.getRepoMock(ctrl)
-			uc := NewKolUseCaseImpl(repoMock, nil)
+			uc := NewKolUseCaseImpl(repoMock)
 
 			err := uc.UpdateKol(context.Background(), tt.args)
 			if (err != nil) != tt.wantErr {
@@ -458,7 +458,7 @@ func TestKolUseCaseImpl_ListKols(t *testing.T) {
 			ctrl := gomock.NewController(t)
 
 			repoMock := tt.getRepoMock(ctrl)
-			uc := NewKolUseCaseImpl(repoMock, nil)
+			uc := NewKolUseCaseImpl(repoMock)
 
 			got, total, err := uc.ListKols(context.Background(), tt.args)
 			if (err != nil) != tt.wantErr {
@@ -567,7 +567,7 @@ func TestKolUseCaseImpl_CreateTag(t *testing.T) {
 			ctrl := gomock.NewController(t)
 
 			repoMock := tt.getRepoMock(ctrl)
-			uc := NewKolUseCaseImpl(repoMock, nil)
+			uc := NewKolUseCaseImpl(repoMock)
 
 			err := uc.CreateTag(context.Background(), tt.args)
 			if (err != nil) != tt.wantErr {
@@ -651,7 +651,7 @@ func TestKolUseCaseImpl_ListTagsByName(t *testing.T) {
 			ctrl := gomock.NewController(t)
 
 			repoMock := tt.getRepoMock(ctrl)
-			uc := NewKolUseCaseImpl(repoMock, nil)
+			uc := NewKolUseCaseImpl(repoMock)
 
 			got, err := uc.ListTagsByName(context.Background(), tt.args)
 			if (err != nil) != tt.wantErr {
@@ -742,7 +742,7 @@ func TestKolUseCaseImpl_ListProductsByName(t *testing.T) {
 			ctrl := gomock.NewController(t)
 
 			repoMock := tt.getRepoMock(ctrl)
-			uc := NewKolUseCaseImpl(repoMock, nil)
+			uc := NewKolUseCaseImpl(repoMock)
 
 			got, err := uc.ListProductsByName(context.Background(), tt.args)
 			if (err != nil) != tt.wantErr {
@@ -760,7 +760,6 @@ func TestKolUseCaseImpl_ListProductsByName(t *testing.T) {
 		})
 	}
 }
-
 
 func TestKolUseCaseImpl_CreateProduct(t *testing.T) {
 	t.Parallel()
@@ -849,7 +848,7 @@ func TestKolUseCaseImpl_CreateProduct(t *testing.T) {
 			ctrl := gomock.NewController(t)
 
 			repoMock := tt.getRepoMock(ctrl)
-			uc := NewKolUseCaseImpl(repoMock, nil)
+			uc := NewKolUseCaseImpl(repoMock)
 
 			err := uc.CreateProduct(context.Background(), tt.args)
 			if (err != nil) != tt.wantErr {
@@ -863,232 +862,232 @@ func TestKolUseCaseImpl_CreateProduct(t *testing.T) {
 	}
 }
 
-func TestKolUseCaseImpl_SendEmail(t *testing.T) {
-	t.Parallel()
+// func TestKolUseCaseImpl_SendEmail(t *testing.T) {
+// 	t.Parallel()
 
-	tests := []struct {
-		name          string
-		wantErr       bool
-		expectedError error
-		getRepoMock   func(ctrl *gomock.Controller) (domain.Repository, domain.EmailRepository)
-		args          SendEmailParam
-	}{
-		{
-			name:    "success",
-			wantErr: false,
-			getRepoMock: func(ctrl *gomock.Controller) (domain.Repository, domain.EmailRepository) {
-				repoMock := repositorymock.NewMockRepository(ctrl)
-				emailRepoMock := repositorymock.NewMockEmailRepository(ctrl)
+// 	tests := []struct {
+// 		name          string
+// 		wantErr       bool
+// 		expectedError error
+// 		getRepoMock   func(ctrl *gomock.Controller) (domain.Repository, domain.EmailRepository)
+// 		args          SendEmailParam
+// 	}{
+// 		{
+// 			name:    "success",
+// 			wantErr: false,
+// 			getRepoMock: func(ctrl *gomock.Controller) (domain.Repository, domain.EmailRepository) {
+// 				repoMock := repositorymock.NewMockRepository(ctrl)
+// 				emailRepoMock := repositorymock.NewMockEmailRepository(ctrl)
 
-				repoMock.EXPECT().GetProductByID(gomock.Any(), uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6")).Return(&entities.Product{
-					ID:   uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6"),
-					Name: "test-product",
-				}, nil)
+// 				repoMock.EXPECT().GetProductByID(gomock.Any(), uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6")).Return(&entities.Product{
+// 					ID:   uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6"),
+// 					Name: "test-product",
+// 				}, nil)
 
-				kols := []*entities.Kol{
-					{
-						ID:    uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6"),
-						Name:  "test-kol",
-						Email: "test@example.com",
-					},
-				}
+// 				kols := []*entities.Kol{
+// 					{
+// 						ID:    uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6"),
+// 						Name:  "test-kol",
+// 						Email: "test@example.com",
+// 					},
+// 				}
 
-				repoMock.EXPECT().ListKolsByIDs(gomock.Any(), []uuid.UUID{uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6")}).Return(kols, nil)
+// 				repoMock.EXPECT().ListKolsByIDs(gomock.Any(), []uuid.UUID{uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6")}).Return(kols, nil)
 
-				sendEmailParams := domain.SendEmailParams{
-					Subject:    "Test Subject",
-					Body:       "Test Content",
-					ToEmails:   []domain.ToEmail{{Email: "test@example.com", Name: "test-kol"}},
-					Images:     []domain.SendEmailImage{{ContentID: "test-content-id", Data: "test-data", ImageType: "test-image-type"}},
-				}
+// 				sendEmailParams := domain.SendEmailParams{
+// 					Subject:    "Test Subject",
+// 					Body:       "Test Content",
+// 					ToEmails:   []domain.ToEmail{{Email: "test@example.com", Name: "test-kol"}},
+// 					Images:     []domain.SendEmailImage{{ContentID: "test-content-id", Data: "test-data", ImageType: "test-image-type"}},
+// 				}
 
-				emailRepoMock.EXPECT().SendEmail(gomock.Any(), sendEmailParams).Return(nil)
+// 				emailRepoMock.EXPECT().SendEmail(gomock.Any(), sendEmailParams).Return(nil)
 
-				createSendEmailLogParam := &entities.SendEmailLog{
-					AdminID:     uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6"),
-					AdminName:   "test-admin",
-					KolID:       uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6"),
-					KolName:     "test-kol",
-					Email:       "test@example.com",
-					ProductID:   uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6"),
-					ProductName: "test-product",
-				}
-				repoMock.EXPECT().CreateSendEmailLog(gomock.Any(), createSendEmailLogParam).Return(nil, nil)
+// 				createSendEmailLogParam := &entities.SendEmailLog{
+// 					AdminID:     uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6"),
+// 					AdminName:   "test-admin",
+// 					KolID:       uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6"),
+// 					KolName:     "test-kol",
+// 					Email:       "test@example.com",
+// 					ProductID:   uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6"),
+// 					ProductName: "test-product",
+// 				}
+// 				repoMock.EXPECT().CreateSendEmailLog(gomock.Any(), createSendEmailLogParam).Return(nil, nil)
 
-				return repoMock, emailRepoMock
-			},
-			args: SendEmailParam{
-				KolIDs:       []uuid.UUID{uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6")},
-				ProductID:    uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6"),
-				Subject:      "Test Subject",
-				EmailContent: "Test Content",
-				UpdatedAdminID:     uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6"),
-				UpdatedAdminName:   "test-admin",
-				Images:           []SendEmailImage{{ContentID: "test-content-id", Data: "test-data", ImageType: "test-image-type"}},
-			},
-		},
-		{
-			name:          "GetProductByID_not_found",
-			wantErr:       true,
-			expectedError: NotFoundError{resource: "product", id: "0193487b-f1a2-7a72-8ae4-197b84dc52d6"},
-			getRepoMock: func(ctrl *gomock.Controller) (domain.Repository, domain.EmailRepository) {
-				repoMock := repositorymock.NewMockRepository(ctrl)
-				emailRepoMock := repositorymock.NewMockEmailRepository(ctrl)
+// 				return repoMock, emailRepoMock
+// 			},
+// 			args: SendEmailParam{
+// 				KolIDs:       []uuid.UUID{uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6")},
+// 				ProductID:    uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6"),
+// 				Subject:      "Test Subject",
+// 				EmailContent: "Test Content",
+// 				UpdatedAdminID:     uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6"),
+// 				UpdatedAdminName:   "test-admin",
+// 				Images:           []SendEmailImage{{ContentID: "test-content-id", Data: "test-data", ImageType: "test-image-type"}},
+// 			},
+// 		},
+// 		{
+// 			name:          "GetProductByID_not_found",
+// 			wantErr:       true,
+// 			expectedError: NotFoundError{resource: "product", id: "0193487b-f1a2-7a72-8ae4-197b84dc52d6"},
+// 			getRepoMock: func(ctrl *gomock.Controller) (domain.Repository, domain.EmailRepository) {
+// 				repoMock := repositorymock.NewMockRepository(ctrl)
+// 				emailRepoMock := repositorymock.NewMockEmailRepository(ctrl)
 
-				repoMock.EXPECT().GetProductByID(gomock.Any(), gomock.Any()).Return(nil, domain.ErrDataNotFound)
+// 				repoMock.EXPECT().GetProductByID(gomock.Any(), gomock.Any()).Return(nil, domain.ErrDataNotFound)
 
-				return repoMock, emailRepoMock
-			},
-			args: SendEmailParam{
-				ProductID: uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6"),
-			},
-		},
-		{
-			name:          "GetProductByID_error",
-			wantErr:       true,
-			expectedError: fmt.Errorf("repo.GetProductByID error: %w", errors.New("database error")),
-			getRepoMock: func(ctrl *gomock.Controller) (domain.Repository, domain.EmailRepository) {
-				repoMock := repositorymock.NewMockRepository(ctrl)
-				emailRepoMock := repositorymock.NewMockEmailRepository(ctrl)
+// 				return repoMock, emailRepoMock
+// 			},
+// 			args: SendEmailParam{
+// 				ProductID: uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6"),
+// 			},
+// 		},
+// 		{
+// 			name:          "GetProductByID_error",
+// 			wantErr:       true,
+// 			expectedError: fmt.Errorf("repo.GetProductByID error: %w", errors.New("database error")),
+// 			getRepoMock: func(ctrl *gomock.Controller) (domain.Repository, domain.EmailRepository) {
+// 				repoMock := repositorymock.NewMockRepository(ctrl)
+// 				emailRepoMock := repositorymock.NewMockEmailRepository(ctrl)
 
-				repoMock.EXPECT().GetProductByID(gomock.Any(), gomock.Any()).Return(nil, errors.New("database error"))
+// 				repoMock.EXPECT().GetProductByID(gomock.Any(), gomock.Any()).Return(nil, errors.New("database error"))
 
-				return repoMock, emailRepoMock
-			},
-			args: SendEmailParam{
-				ProductID: uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6"),
-			},
-		},
-		{
-			name:          "ListKolsByIDs_not_found",
-			wantErr:       true,
-			expectedError: NotFoundError{resource: "kol", id: []uuid.UUID{uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6")}},
-			getRepoMock: func(ctrl *gomock.Controller) (domain.Repository, domain.EmailRepository) {
-				repoMock := repositorymock.NewMockRepository(ctrl)
-				emailRepoMock := repositorymock.NewMockEmailRepository(ctrl)
+// 				return repoMock, emailRepoMock
+// 			},
+// 			args: SendEmailParam{
+// 				ProductID: uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6"),
+// 			},
+// 		},
+// 		{
+// 			name:          "ListKolsByIDs_not_found",
+// 			wantErr:       true,
+// 			expectedError: NotFoundError{resource: "kol", id: []uuid.UUID{uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6")}},
+// 			getRepoMock: func(ctrl *gomock.Controller) (domain.Repository, domain.EmailRepository) {
+// 				repoMock := repositorymock.NewMockRepository(ctrl)
+// 				emailRepoMock := repositorymock.NewMockEmailRepository(ctrl)
 
-				repoMock.EXPECT().GetProductByID(gomock.Any(), gomock.Any()).Return(nil, nil)
+// 				repoMock.EXPECT().GetProductByID(gomock.Any(), gomock.Any()).Return(nil, nil)
 
-				repoMock.EXPECT().ListKolsByIDs(gomock.Any(), gomock.Any()).Return(nil, nil)
+// 				repoMock.EXPECT().ListKolsByIDs(gomock.Any(), gomock.Any()).Return(nil, nil)
 
-				return repoMock, emailRepoMock
-			},
-			args: SendEmailParam{
-				KolIDs: []uuid.UUID{uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6")},
-			},
-		},
-		{
-			name:          "ListKolsByIDs_error",
-			wantErr:       true,
-			expectedError: fmt.Errorf("repo.ListKolsByIDs error: %w", errors.New("database error")),
-			getRepoMock: func(ctrl *gomock.Controller) (domain.Repository, domain.EmailRepository) {
-				repoMock := repositorymock.NewMockRepository(ctrl)
-				emailRepoMock := repositorymock.NewMockEmailRepository(ctrl)
+// 				return repoMock, emailRepoMock
+// 			},
+// 			args: SendEmailParam{
+// 				KolIDs: []uuid.UUID{uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6")},
+// 			},
+// 		},
+// 		{
+// 			name:          "ListKolsByIDs_error",
+// 			wantErr:       true,
+// 			expectedError: fmt.Errorf("repo.ListKolsByIDs error: %w", errors.New("database error")),
+// 			getRepoMock: func(ctrl *gomock.Controller) (domain.Repository, domain.EmailRepository) {
+// 				repoMock := repositorymock.NewMockRepository(ctrl)
+// 				emailRepoMock := repositorymock.NewMockEmailRepository(ctrl)
 
-				repoMock.EXPECT().GetProductByID(gomock.Any(), gomock.Any()).Return(nil, nil)
-				repoMock.EXPECT().ListKolsByIDs(gomock.Any(), gomock.Any()).Return(nil, errors.New("database error"))
+// 				repoMock.EXPECT().GetProductByID(gomock.Any(), gomock.Any()).Return(nil, nil)
+// 				repoMock.EXPECT().ListKolsByIDs(gomock.Any(), gomock.Any()).Return(nil, errors.New("database error"))
 
-				return repoMock, emailRepoMock
-			},
-			args: SendEmailParam{
-				KolIDs: []uuid.UUID{uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6")},
-			},
-		},
-		{
-			name:          "send_email_error",
-			wantErr:       true,
-			expectedError: fmt.Errorf("emailRepo.SendEmail error: %w", errors.New("email error")),
-			getRepoMock: func(ctrl *gomock.Controller) (domain.Repository, domain.EmailRepository) {
-				repoMock := repositorymock.NewMockRepository(ctrl)
-				emailRepoMock := repositorymock.NewMockEmailRepository(ctrl)
+// 				return repoMock, emailRepoMock
+// 			},
+// 			args: SendEmailParam{
+// 				KolIDs: []uuid.UUID{uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6")},
+// 			},
+// 		},
+// 		{
+// 			name:          "send_email_error",
+// 			wantErr:       true,
+// 			expectedError: fmt.Errorf("emailRepo.SendEmail error: %w", errors.New("email error")),
+// 			getRepoMock: func(ctrl *gomock.Controller) (domain.Repository, domain.EmailRepository) {
+// 				repoMock := repositorymock.NewMockRepository(ctrl)
+// 				emailRepoMock := repositorymock.NewMockEmailRepository(ctrl)
 
-				repoMock.EXPECT().GetProductByID(gomock.Any(), uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6")).Return(&entities.Product{
-					ID:   uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6"),
-					Name: "test-product",
-				}, nil)
+// 				repoMock.EXPECT().GetProductByID(gomock.Any(), uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6")).Return(&entities.Product{
+// 					ID:   uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6"),
+// 					Name: "test-product",
+// 				}, nil)
 
-				kols := []*entities.Kol{
-					{
-						ID:    uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6"),
-						Name:  "test-kol",
-						Email: "test@example.com",
-					},
-				}
+// 				kols := []*entities.Kol{
+// 					{
+// 						ID:    uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6"),
+// 						Name:  "test-kol",
+// 						Email: "test@example.com",
+// 					},
+// 				}
 
-				repoMock.EXPECT().ListKolsByIDs(gomock.Any(), []uuid.UUID{uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6")}).Return(kols, nil)
-				emailRepoMock.EXPECT().SendEmail(gomock.Any(), gomock.Any()).Return(errors.New("email error"))
+// 				repoMock.EXPECT().ListKolsByIDs(gomock.Any(), []uuid.UUID{uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6")}).Return(kols, nil)
+// 				emailRepoMock.EXPECT().SendEmail(gomock.Any(), gomock.Any()).Return(errors.New("email error"))
 
-				return repoMock, emailRepoMock
-			},
-			args: SendEmailParam{
-				KolIDs:       []uuid.UUID{uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6")},
-				ProductID:    uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6"),
-				Subject:      "Test Subject",
-				EmailContent: "Test Content",
-				UpdatedAdminID:     uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6"),
-				UpdatedAdminName:   "test-admin",
-			},
-		},
-		{
-			name:          "create_send_email_log_error",
-			wantErr:       true,
-			expectedError: fmt.Errorf("repo.CreateSendEmailLog error: %w", errors.New("database error")),
-			getRepoMock: func(ctrl *gomock.Controller) (domain.Repository, domain.EmailRepository) {
-				repoMock := repositorymock.NewMockRepository(ctrl)
-				emailRepoMock := repositorymock.NewMockEmailRepository(ctrl)
+// 				return repoMock, emailRepoMock
+// 			},
+// 			args: SendEmailParam{
+// 				KolIDs:       []uuid.UUID{uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6")},
+// 				ProductID:    uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6"),
+// 				Subject:      "Test Subject",
+// 				EmailContent: "Test Content",
+// 				UpdatedAdminID:     uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6"),
+// 				UpdatedAdminName:   "test-admin",
+// 			},
+// 		},
+// 		{
+// 			name:          "create_send_email_log_error",
+// 			wantErr:       true,
+// 			expectedError: fmt.Errorf("repo.CreateSendEmailLog error: %w", errors.New("database error")),
+// 			getRepoMock: func(ctrl *gomock.Controller) (domain.Repository, domain.EmailRepository) {
+// 				repoMock := repositorymock.NewMockRepository(ctrl)
+// 				emailRepoMock := repositorymock.NewMockEmailRepository(ctrl)
 
-				repoMock.EXPECT().GetProductByID(gomock.Any(), uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6")).Return(&entities.Product{
-					ID:   uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6"),
-					Name: "test-product",
-				}, nil)
+// 				repoMock.EXPECT().GetProductByID(gomock.Any(), uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6")).Return(&entities.Product{
+// 					ID:   uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6"),
+// 					Name: "test-product",
+// 				}, nil)
 
-				kols := []*entities.Kol{
-					{
-						ID:    uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6"),
-						Name:  "test-kol",
-						Email: "test@example.com",
-					},
-				}
+// 				kols := []*entities.Kol{
+// 					{
+// 						ID:    uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6"),
+// 						Name:  "test-kol",
+// 						Email: "test@example.com",
+// 					},
+// 				}
 
-				repoMock.EXPECT().ListKolsByIDs(gomock.Any(), []uuid.UUID{uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6")}).Return(kols, nil)
-				emailRepoMock.EXPECT().SendEmail(gomock.Any(), gomock.Any()).Return(nil)
+// 				repoMock.EXPECT().ListKolsByIDs(gomock.Any(), []uuid.UUID{uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6")}).Return(kols, nil)
+// 				emailRepoMock.EXPECT().SendEmail(gomock.Any(), gomock.Any()).Return(nil)
 
-				repoMock.EXPECT().CreateSendEmailLog(gomock.Any(), gomock.Any()).Return(nil, errors.New("database error"))
+// 				repoMock.EXPECT().CreateSendEmailLog(gomock.Any(), gomock.Any()).Return(nil, errors.New("database error"))
 
-				return repoMock, emailRepoMock
-			},
-			args: SendEmailParam{
-				KolIDs:       []uuid.UUID{uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6")},
-				ProductID:    uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6"),
-				Subject:      "Test Subject",
-				EmailContent: "Test Content",
-				UpdatedAdminID:     uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6"),
-				UpdatedAdminName:   "test-admin",
-			},
-		},
-	}
+// 				return repoMock, emailRepoMock
+// 			},
+// 			args: SendEmailParam{
+// 				KolIDs:       []uuid.UUID{uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6")},
+// 				ProductID:    uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6"),
+// 				Subject:      "Test Subject",
+// 				EmailContent: "Test Content",
+// 				UpdatedAdminID:     uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6"),
+// 				UpdatedAdminName:   "test-admin",
+// 			},
+// 		},
+// 	}
 
-	for _, tt := range tests {
-		tt := tt
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
+// 	for _, tt := range tests {
+// 		tt := tt
+// 		t.Run(tt.name, func(t *testing.T) {
+// 			t.Parallel()
 
-			ctrl := gomock.NewController(t)
+// 			ctrl := gomock.NewController(t)
 
-			repoMock, emailRepoMock := tt.getRepoMock(ctrl)
-			uc := NewKolUseCaseImpl(repoMock, emailRepoMock)
+// 			repoMock, emailRepoMock := tt.getRepoMock(ctrl)
+// 			uc := NewKolUseCaseImpl(repoMock, emailRepoMock)
 
-			err := uc.SendEmail(context.Background(), tt.args)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("KolUseCaseImpl.SendEmail() error = %v, wantErr %v", err, tt.wantErr)
-			}
+// 			err := uc.SendEmail(context.Background(), tt.args)
+// 			if (err != nil) != tt.wantErr {
+// 				t.Errorf("KolUseCaseImpl.SendEmail() error = %v, wantErr %v", err, tt.wantErr)
+// 			}
 
-			if tt.wantErr && err.Error() != tt.expectedError.Error() {
-				t.Errorf("KolUseCaseImpl.SendEmail() error = %v, expectedError %v", err, tt.expectedError)
-			}
-		})
-	}
-}
+// 			if tt.wantErr && err.Error() != tt.expectedError.Error() {
+// 				t.Errorf("KolUseCaseImpl.SendEmail() error = %v, expectedError %v", err, tt.expectedError)
+// 			}
+// 		})
+// 	}
+// }
 
 func TestKolUseCaseImpl_DeleteKolByID(t *testing.T) {
 	t.Parallel()
@@ -1146,7 +1145,7 @@ func TestKolUseCaseImpl_DeleteKolByID(t *testing.T) {
 			ctrl := gomock.NewController(t)
 
 			repoMock := tt.getRepoMock(ctrl)
-			uc := NewKolUseCaseImpl(repoMock, nil)
+			uc := NewKolUseCaseImpl(repoMock)
 
 			err := uc.DeleteKolByID(context.Background(), tt.args)
 			if (err != nil) != tt.wantErr {

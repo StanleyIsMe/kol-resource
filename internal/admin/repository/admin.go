@@ -8,9 +8,9 @@ import (
 	"kolresource/internal/admin/domain/entities"
 	model "kolresource/internal/db/sqlboiler"
 
+	"github.com/aarondl/sqlboiler/v4/boil"
+	"github.com/aarondl/sqlboiler/v4/queries/qm"
 	"github.com/google/uuid"
-	"github.com/volatiletech/sqlboiler/v4/boil"
-	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 )
 
 type AdminRepository struct {

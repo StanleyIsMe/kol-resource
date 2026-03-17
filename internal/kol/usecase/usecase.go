@@ -4,6 +4,7 @@ import (
 	"context"
 	"kolresource/internal/kol"
 	"mime/multipart"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -14,15 +15,15 @@ type KolUseCase interface { //nolint:interfacebloat
 	DeleteKolByID(ctx context.Context, kolID uuid.UUID) error
 	UpdateKol(ctx context.Context, param UpdateKolParam) error
 	ListKols(ctx context.Context, param ListKolsParam) ([]*Kol, int, error)
+	ListKolEmailsByIDs(ctx context.Context, kolIDs []uuid.UUID) ([]*KolEmail, error)
 
 	BatchCreateKolsByXlsx(ctx context.Context, param BatchCreateKolsByXlsxParam) error
 	CreateTag(ctx context.Context, param CreateTagParam) error
 	ListTagsByName(ctx context.Context, name string) ([]*Tag, error)
 
 	CreateProduct(ctx context.Context, param CreateProductParam) error
+	GetProductByID(ctx context.Context, productID uuid.UUID) (*Product, error)
 	ListProductsByName(ctx context.Context, name string) ([]*Product, error)
-
-	SendEmail(ctx context.Context, param SendEmailParam) error
 }
 
 type Kol struct {
@@ -36,14 +37,22 @@ type Kol struct {
 }
 
 type Tag struct {
-	ID   uuid.UUID `json:"id"`
-	Name string    `json:"name"`
+	ID        uuid.UUID `json:"id"`
+	Name      string    `json:"name"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+type KolEmail struct {
+	ID    uuid.UUID `json:"id"`
+	Name  string    `json:"name"`
+	Email string    `json:"email"`
 }
 
 type Product struct {
 	ID          uuid.UUID `json:"id"`
 	Name        string    `json:"name"`
 	Description string    `json:"description"`
+	CreatedAt   time.Time `json:"created_at"`
 }
 
 type CreateKolParam struct {
@@ -91,20 +100,4 @@ type CreateProductParam struct {
 	Name           string    `json:"name"`
 	Description    string    `json:"description"`
 	UpdatedAdminID uuid.UUID `json:"updated_admin_id"`
-}
-
-type SendEmailParam struct {
-	Subject          string           `json:"subject"`
-	EmailContent     string           `json:"email_content"`
-	KolIDs           []uuid.UUID      `json:"kol_ids"`
-	ProductID        uuid.UUID        `json:"product_id"`
-	UpdatedAdminID   uuid.UUID        `json:"updated_admin_id"`
-	UpdatedAdminName string           `json:"updated_admin_name"`
-	Images           []SendEmailImage `json:"images"`
-}
-
-type SendEmailImage struct {
-	ContentID string
-	Data      string
-	ImageType string
 }

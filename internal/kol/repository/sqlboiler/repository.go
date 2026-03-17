@@ -10,9 +10,9 @@ import (
 	"kolresource/internal/kol/domain"
 	"kolresource/internal/kol/domain/entities"
 
-	"github.com/volatiletech/null/v9"
-	"github.com/volatiletech/sqlboiler/v4/boil"
-	"github.com/volatiletech/sqlboiler/v4/queries/qm"
+	"github.com/aarondl/null/v8"
+	"github.com/aarondl/sqlboiler/v4/boil"
+	"github.com/aarondl/sqlboiler/v4/queries/qm"
 
 	"github.com/google/uuid"
 )
@@ -28,7 +28,8 @@ func NewKolRepository(db *sql.DB) *KolRepository {
 }
 
 func (repo *KolRepository) GetKolByID(ctx context.Context, id uuid.UUID) (*entities.Kol, error) {
-	kolModel, err := model.Kols(qm.Where("id = ?", id.String())).One(ctx, repo.db)
+	tt := qm.Where("id = ?", id.String())
+	kolModel, err := model.Kols(tt).One(ctx, repo.db)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, domain.ErrDataNotFound
@@ -731,6 +732,8 @@ func (repo *KolRepository) newKolFromModel(kolModel *model.Kol) (*entities.Kol, 
 		Sex:            sex,
 		Enable:         kolModel.Enable,
 		UpdatedAdminID: updateAdminUUID,
+		CreatedAt:      kolModel.CreatedAt,
+		UpdatedAt:      kolModel.UpdatedAt,
 	}, nil
 }
 
@@ -741,8 +744,9 @@ func (repo *KolRepository) newTagFromModel(tagModel *model.Tag) (*entities.Tag, 
 	}
 
 	return &entities.Tag{
-		ID:   tagUUID,
-		Name: tagModel.Name,
+		ID:        tagUUID,
+		Name:      tagModel.Name,
+		CreatedAt: tagModel.CreatedAt,
 	}, nil
 }
 
@@ -756,6 +760,7 @@ func (repo *KolRepository) newProductFromModel(productModel *model.Product) (*en
 		ID:          productUUID,
 		Name:        productModel.Name,
 		Description: productModel.Description,
+		CreatedAt:   productModel.CreatedAt,
 	}, nil
 }
 

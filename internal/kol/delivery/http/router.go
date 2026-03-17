@@ -22,6 +22,4 @@ func RegisterKolRoutes(router *gin.RouterGroup, kolUsecase usecase.KolUseCase) {
 
 	v1.POST("/products", kolHandler.CreateProduct)
 	v1.GET("/products", kolHandler.ListProducts)
-
-	v1.POST("/send_emails", kolHandler.SendEmail)
 }

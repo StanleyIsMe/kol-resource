@@ -108,10 +108,10 @@ build: ## build docker image
 	docker buildx build \
 	-f Dockerfile \
 	-t $(PROJECT_NAME) \
-	--platform linux/arm64 \
-	--build-arg GO_VERSION=1.23.0 \
+	--platform linux/amd64 \
+	--build-arg GO_VERSION=1.24.2 \
 	--build-arg GO_GOOS=linux \
-	--build-arg GO_GOARCH=arm64 \
+	--build-arg GO_GOARCH=amd64 \
 	--build-arg GLOBAL_VAR_PKG=server \
 	--build-arg LAST_MAIN_COMMIT_HASH=$(shell git rev-parse HEAD) \
 	--build-arg LAST_MAIN_COMMIT_TIME=$(shell git log main -n1 --format='%cd' --date='iso-strict') \
