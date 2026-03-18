@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 )
 
+//go:generate mockgen -source=./usecase.go -destination=../mock/usecasemock/usecase_mock.go -package=usecasemock
 type AdminUseCase interface {
 	Register(ctx context.Context, param RegisterParams) error
 	Login(ctx context.Context, userName, password string) (*LoginResponse, error)

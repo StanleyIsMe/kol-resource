@@ -8,9 +8,22 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 )
+
+// truncateKolTimes returns a copy of kol with CreatedAt and UpdatedAt truncated to microsecond
+// to match PostgreSQL timestamp precision in comparisons.
+func truncateKolTimes(kol *entities.Kol) *entities.Kol {
+	if kol == nil {
+		return nil
+	}
+	c := *kol
+	c.CreatedAt = kol.CreatedAt.Truncate(time.Microsecond)
+	c.UpdatedAt = kol.UpdatedAt.Truncate(time.Microsecond)
+	return &c
+}
 
 func TestCreateKol(t *testing.T) {
 	tests := []struct {
@@ -169,7 +182,9 @@ func TestGetKolByID(t *testing.T) {
 					return
 				}
 
-				if !reflect.DeepEqual(gotKol, tt.wantKol) {
+				gotTrunc := truncateKolTimes(gotKol)
+				wantTrunc := truncateKolTimes(tt.wantKol)
+				if !reflect.DeepEqual(gotTrunc, wantTrunc) {
 					t.Errorf("got %v, but want %v", gotKol, tt.wantKol)
 				}
 			} else if gotKol != nil {
@@ -232,7 +247,9 @@ func TestGetKolByEmail(t *testing.T) {
 					return
 				}
 
-				if !reflect.DeepEqual(gotKol, tt.wantKol) {
+				gotTrunc := truncateKolTimes(gotKol)
+				wantTrunc := truncateKolTimes(tt.wantKol)
+				if !reflect.DeepEqual(gotTrunc, wantTrunc) {
 					t.Errorf("got %v, but want %v", gotKol, tt.wantKol)
 				}
 			} else if gotKol != nil {
@@ -316,7 +333,12 @@ func TestUpdateKol(t *testing.T) {
 				return
 			}
 			if !tt.wantErr {
-				if !reflect.DeepEqual(gotKol, tt.wantKol) {
+				gotTrunc := truncateKolTimes(gotKol)
+				wantTrunc := truncateKolTimes(tt.wantKol)
+				if wantTrunc != nil {
+					wantTrunc.UpdatedAt = gotTrunc.UpdatedAt // accept DB-assigned value
+				}
+				if !reflect.DeepEqual(gotTrunc, wantTrunc) {
 					t.Errorf("UpdateKol() = %v, want %v", gotKol, tt.wantKol)
 				}
 			}

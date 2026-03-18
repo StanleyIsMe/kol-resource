@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 )
 
+//go:generate mockgen -source=./repository.go -destination=../mock/repositorymock/repository_mock.go -package=repositorymock
 //nolint:interfacebloat
 type Repository interface {
 	WithTx(ctx context.Context, fn func(ctx context.Context) error) error

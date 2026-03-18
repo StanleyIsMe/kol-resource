@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 )
 
+//go:generate mockgen -source=./usecase.go -destination=../mock/usecasemock/usecase_mock.go -package=usecasemock
 type EmailUseCase interface {
 	CreateEmailSender(ctx context.Context, param CreateEmailSenderParam) error
 	ListEmailSenders(ctx context.Context) ([]EmailSender, error)
