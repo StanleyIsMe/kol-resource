@@ -97,10 +97,10 @@ type ListEmailSendersResponse struct {
 }
 
 type ListEmailJobsRequest struct {
-	SenderEmail *string               `form:"sender_email,omitempty"`
-	SenderName  *string               `form:"sender_name,omitempty"`
-	ProductName *string               `form:"product_name,omitempty"`
-	Status      *email.EmailJobStatus `form:"status,omitempty"`
+	SenderEmail *string          `form:"sender_email,omitempty"`
+	SenderName  *string          `form:"sender_name,omitempty"`
+	ProductName *string          `form:"product_name,omitempty"`
+	Status      *email.JobStatus `form:"status,omitempty"`
 	pager.Page
 }
 

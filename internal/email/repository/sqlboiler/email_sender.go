@@ -105,7 +105,7 @@ func (r *EmailRepository) UpdateEmailSender(ctx context.Context, param domain.Up
 	if !isEdited {
 		return nil
 	}
-	
+
 	emailSenderModel.UpdatedAdminID = param.UpdatedAdminID.String()
 
 	_, err = emailSenderModel.Update(ctx, r.db, boil.Infer())

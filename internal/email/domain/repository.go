@@ -20,7 +20,7 @@ type Repository interface {
 	AllEmailSenders(ctx context.Context) ([]*entities.EmailSender, error)
 
 	CreateEmailJob(ctx context.Context, job *entities.EmailJob) (*entities.EmailJob, error)
-	UpdateEmailJobStats(ctx context.Context, id int64, status email.EmailJobStatus) error
+	UpdateEmailJobStats(ctx context.Context, id int64, status email.JobStatus) error
 	UpdateEmailJob(ctx context.Context, param UpdateEmailJobParam) error
 	GetEmailJobByID(ctx context.Context, id int64) (*entities.EmailJob, error)
 	GetEmailJobByIDForUpdate(ctx context.Context, id int64) (*entities.EmailJob, error)
@@ -42,10 +42,10 @@ type EmailRepository interface {
 
 type UpdateEmailSenderParam struct {
 	ID             uuid.UUID `json:"id"`
-	Name           *string    `json:"name"`
-	Email          *string    `json:"email"`
-	Key            *string    `json:"key"`
-	RateLimit      *int       `json:"rate_limit"`
+	Name           *string   `json:"name"`
+	Email          *string   `json:"email"`
+	Key            *string   `json:"key"`
+	RateLimit      *int      `json:"rate_limit"`
 	UpdatedAdminID uuid.UUID `json:"updated_admin_id"`
 }
 
@@ -55,27 +55,27 @@ type GrabEmailJobParams struct {
 
 type ListEmailLogsParams struct {
 	JobID  int64
-	Status *email.EmailLogStatus
+	Status *email.LogStatus
 }
 
 type ListEmailJobsParams struct {
 	SenderEmail *string
 	SenderName  *string
 	ProductName *string
-	Status      *email.EmailJobStatus
+	Status      *email.JobStatus
 	Page        int
 	Size        int
 }
 
 type UpdateEmailJobParam struct {
 	JobID                int64
-	Status               *email.EmailJobStatus
+	Status               *email.JobStatus
 	IncreaseSuccessCount int
 }
 
 type UpdateEmailLogParam struct {
 	ID     int64
-	Status *email.EmailLogStatus
+	Status *email.LogStatus
 	Memo   string
 	Reply  *bool
 }

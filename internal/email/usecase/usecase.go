@@ -69,7 +69,7 @@ type ListEmailJobsParam struct {
 	SenderEmail *string
 	SenderName  *string
 	ProductName *string
-	Status      *email.EmailJobStatus
+	Status      *email.JobStatus
 	Page        int
 	PageSize    int
 }
@@ -80,35 +80,35 @@ type ListEmailJobsResponse struct {
 }
 
 type EmailJob struct {
-	ID                   int64                `json:"id"`
-	ExpectedReciverCount int                  `json:"expected_reciver_count"`
-	SuccessCount         int                  `json:"success_count"`
-	SenderID             uuid.UUID            `json:"sender_id"`
-	SenderName           string               `json:"sender_name"`
-	SenderEmail          string               `json:"sender_email"`
-	AdminID              uuid.UUID            `json:"admin_id"`
-	AdminName            string               `json:"admin_name"`
-	ProductID            uuid.UUID            `json:"product_id"`
-	ProductName          string               `json:"product_name"`
-	Memo                 string               `json:"memo"`
-	Status               email.EmailJobStatus `json:"status"`
-	CreatedAt            time.Time            `json:"created_at"`
-	UpdatedAt            time.Time            `json:"updated_at"`
-	LastExecuteAt        time.Time            `json:"last_execute_at"`
+	ID                   int64           `json:"id"`
+	ExpectedReciverCount int             `json:"expected_reciver_count"`
+	SuccessCount         int             `json:"success_count"`
+	SenderID             uuid.UUID       `json:"sender_id"`
+	SenderName           string          `json:"sender_name"`
+	SenderEmail          string          `json:"sender_email"`
+	AdminID              uuid.UUID       `json:"admin_id"`
+	AdminName            string          `json:"admin_name"`
+	ProductID            uuid.UUID       `json:"product_id"`
+	ProductName          string          `json:"product_name"`
+	Memo                 string          `json:"memo"`
+	Status               email.JobStatus `json:"status"`
+	CreatedAt            time.Time       `json:"created_at"`
+	UpdatedAt            time.Time       `json:"updated_at"`
+	LastExecuteAt        time.Time       `json:"last_execute_at"`
 }
 
 type ListEmailLogsParam struct {
 	JobID  int64 `json:"job_id"`
-	Status *email.EmailLogStatus
+	Status *email.LogStatus
 }
 
 type EmailLog struct {
-	ID        int64                `json:"id"`
-	Email     string               `json:"email"`
-	Reply     bool                 `json:"reply"`
-	KolID     uuid.UUID            `json:"kol_id"`
-	KolName   string               `json:"kol_name"`
-	Status    email.EmailLogStatus `json:"status"`
-	Memo      string               `json:"memo"`
-	SendedAt  time.Time            `json:"sended_at"`
+	ID       int64           `json:"id"`
+	Email    string          `json:"email"`
+	Reply    bool            `json:"reply"`
+	KolID    uuid.UUID       `json:"kol_id"`
+	KolName  string          `json:"kol_name"`
+	Status   email.LogStatus `json:"status"`
+	Memo     string          `json:"memo"`
+	SendedAt *time.Time      `json:"sended_at"`
 }

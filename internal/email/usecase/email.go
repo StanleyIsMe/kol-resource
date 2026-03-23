@@ -157,8 +157,7 @@ func (uc *EmailUseCaseImpl) SendEmail(ctx context.Context, param SendEmailParam)
 			ProductID:            param.ProductID,
 			ProductName:          product.Name,
 			UpdatedAdminID:       param.UpdatedAdminID,
-			Status:               email.EmailJobStatusPending,
-			LastExecuteAt:        time.Now(),
+			Status:               email.JobStatusPending,
 		}
 
 		payload := domain.SendEmailParams{
@@ -193,12 +192,10 @@ func (uc *EmailUseCaseImpl) SendEmail(ctx context.Context, param SendEmailParam)
 				KolID:     kol.ID,
 				KolName:   kol.Name,
 				Email:     kol.Email,
-				Status:    email.EmailLogStatusPending,
+				Status:    email.LogStatusPending,
 				ProductID: param.ProductID,
 				SenderID:  emailSender.ID,
 				MessageID: "",
-				CreatedAt: time.Now(),
-				UpdatedAt: time.Now(),
 			})
 		}
 
@@ -221,9 +218,9 @@ func (uc *EmailUseCaseImpl) ListEmailJobs(ctx context.Context, param ListEmailJo
 		SenderEmail: param.SenderEmail,
 		SenderName:  param.SenderName,
 		ProductName: param.ProductName,
-		Status:   param.Status,
-		Page:     param.Page,
-		Size:     param.PageSize,
+		Status:      param.Status,
+		Page:        param.Page,
+		Size:        param.PageSize,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("repo.ListEmailJobs error: %w", err)
@@ -303,14 +300,14 @@ func (uc *EmailUseCaseImpl) ListEmailLogs(ctx context.Context, param ListEmailLo
 	for _, emailLog := range emailLogEntities {
 		emailLog := emailLog
 		emailLogs = append(emailLogs, EmailLog{
-			ID:        emailLog.ID,
-			Email:     emailLog.Email,
-			Reply:     emailLog.Reply,
-			KolID:     emailLog.KolID,
-			KolName:   emailLog.KolName,
-			Status:    emailLog.Status,
-			Memo:      emailLog.Memo,
-			SendedAt:  emailLog.SendedAt,
+			ID:       emailLog.ID,
+			Email:    emailLog.Email,
+			Reply:    emailLog.Reply,
+			KolID:    emailLog.KolID,
+			KolName:  emailLog.KolName,
+			Status:   emailLog.Status,
+			Memo:     emailLog.Memo,
+			SendedAt: emailLog.SendedAt,
 		})
 	}
 
@@ -335,7 +332,7 @@ func (uc *EmailUseCaseImpl) CancelEmailJob(ctx context.Context, id int64) error 
 	}
 
 	err = uc.repo.WithTx(ctx, func(ctx context.Context) error {
-		err = uc.repo.UpdateEmailJobStats(ctx, id, email.EmailJobStatusCanceled)
+		err = uc.repo.UpdateEmailJobStats(ctx, id, email.JobStatusCanceled)
 		if err != nil {
 			return fmt.Errorf("repo.UpdateEmailJobStats error: %w", err)
 		}
@@ -367,7 +364,7 @@ func (uc *EmailUseCaseImpl) StartEmailJob(ctx context.Context, id int64) error {
 	}
 
 	err = uc.repo.WithTx(ctx, func(ctx context.Context) error {
-		err = uc.repo.UpdateEmailJobStats(ctx, id, email.EmailJobStatusPending)
+		err = uc.repo.UpdateEmailJobStats(ctx, id, email.JobStatusPending)
 		if err != nil {
 			return fmt.Errorf("repo.UpdateEmailJobStats error: %w", err)
 		}

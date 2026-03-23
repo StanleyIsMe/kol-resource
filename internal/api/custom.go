@@ -22,7 +22,7 @@ const (
 	defaultTimeout = 10 * time.Second
 )
 
-func (a *API) registerHTTPSvc(_ context.Context, dbStdConn *sql.DB) {
+func (a *API) registerHTTPSvc(ctx context.Context, dbStdConn *sql.DB) {
 	a.server.SetupHTTPServer()
 	httpRouter := a.server.HTTPRouter()
 
@@ -52,10 +52,10 @@ func (a *API) registerHTTPSvc(_ context.Context, dbStdConn *sql.DB) {
 	kolHTTP.RegisterKolRoutes(authRouter, kolUseCase)
 
 	// email domain
-	emailHTTP.RegisterEmailRoutes(authRouter, emailHTTP.RegisterEmailRoutesParams{
-		Router: authRouter,
-		Cfg: a.cfg,
-		EmailUsecase: emailUseCase,
+	emailHTTP.RegisterEmailRoutes(ctx, authRouter, emailHTTP.RegisterEmailRoutesParams{
+		Router:          authRouter,
+		Cfg:             a.cfg,
+		EmailUsecase:    emailUseCase,
 		EmailRepository: emailRepository,
 	})
 }

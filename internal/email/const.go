@@ -1,37 +1,37 @@
 package email
 
-type EmailJobStatus string
+type JobStatus string
 
 const (
-	EmailJobStatusPending          EmailJobStatus = "pending"
-	EmailJobStatusProcessing       EmailJobStatus = "processing"
-	EmailJobStatusSuccess          EmailJobStatus = "success"
-	EmailJobStatusPartiallySuccess EmailJobStatus = "partially_success"
-	EmailJobStatusFailed           EmailJobStatus = "failed"
-	EmailJobStatusCanceled         EmailJobStatus = "canceled"
+	JobStatusPending          JobStatus = "pending"
+	JobStatusProcessing       JobStatus = "processing"
+	JobStatusSuccess          JobStatus = "success"
+	JobStatusPartiallySuccess JobStatus = "partially_success"
+	JobStatusFailed           JobStatus = "failed"
+	JobStatusCanceled         JobStatus = "canceled"
 )
 
-func (s EmailJobStatus) CanCancel() bool {
-	return s == EmailJobStatusPending || s == EmailJobStatusProcessing
+func (s JobStatus) CanCancel() bool {
+	return s == JobStatusPending || s == JobStatusProcessing
 }
 
-func (s EmailJobStatus) CanStart() bool {
-	return s == EmailJobStatusCanceled
+func (s JobStatus) CanStart() bool {
+	return s == JobStatusCanceled
 }
 
-func (s EmailJobStatus) ToPointer() *EmailJobStatus {
+func (s JobStatus) ToPointer() *JobStatus {
 	return &s
 }
 
-type EmailLogStatus string
+type LogStatus string
 
 const (
-	EmailLogStatusPending  EmailLogStatus = "pending"
-	EmailLogStatusSuccess  EmailLogStatus = "success"
-	EmailLogStatusFailed   EmailLogStatus = "failed"
-	EmailLogStatusCanceled EmailLogStatus = "canceled"
+	LogStatusPending  LogStatus = "pending"
+	LogStatusSuccess  LogStatus = "success"
+	LogStatusFailed   LogStatus = "failed"
+	LogStatusCanceled LogStatus = "canceled"
 )
 
-func (s EmailLogStatus) ToPointer() *EmailLogStatus {
+func (s LogStatus) ToPointer() *LogStatus {
 	return &s
 }

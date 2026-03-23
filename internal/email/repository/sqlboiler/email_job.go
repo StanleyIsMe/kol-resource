@@ -36,7 +36,6 @@ func (r *EmailRepository) CreateEmailJob(ctx context.Context, job *entities.Emai
 		UpdatedAdminID:       job.UpdatedAdminID.String(),
 		Memo:                 job.Memo,
 		Payload:              types.JSON(job.Payload),
-		LastExecuteAt:        job.LastExecuteAt,
 	}
 
 	err := emailJobModel.Insert(ctx, r.getTx(ctx), boil.Infer())
@@ -47,7 +46,7 @@ func (r *EmailRepository) CreateEmailJob(ctx context.Context, job *entities.Emai
 	return r.newEmailJobFromModel(emailJobModel)
 }
 
-func (r *EmailRepository) UpdateEmailJobStats(ctx context.Context, id int64, status email.EmailJobStatus) error {
+func (r *EmailRepository) UpdateEmailJobStats(ctx context.Context, id int64, status email.JobStatus) error {
 	emailJobModel, err := model.EmailJobs(
 		qm.Where("id = ?", id),
 		qm.For("UPDATE"),
@@ -91,7 +90,7 @@ func (r *EmailRepository) UpdateEmailJob(ctx context.Context, param domain.Updat
 	}
 
 	setParts = append(setParts, fmt.Sprintf("last_execute_at = $%d", argIndex))
-	args = append(args, time.Now())
+	args = append(args, time.Now().UTC())
 	argIndex++
 
 	args = append(args, param.JobID)
@@ -166,7 +165,7 @@ func (r *EmailRepository) GrabEmailJob(ctx context.Context) ([]*entities.EmailJo
 		WHERE rn = 1
 		FOR UPDATE SKIP LOCKED;
 	`
-	
+
 	var emailJobModels []*model.EmailJob
 	err := queries.Raw(query).Bind(ctx, r.db, &emailJobModels)
 	if err != nil {
@@ -258,7 +257,7 @@ func (r *EmailRepository) newEmailJobFromModel(emailJobModel *model.EmailJob) (*
 		ID:                   emailJobModel.ID,
 		ExpectedReciverCount: emailJobModel.ExpectedReciverCount,
 		SuccessCount:         emailJobModel.SuccessCount,
-		Status:               email.EmailJobStatus(emailJobModel.Status),
+		Status:               email.JobStatus(emailJobModel.Status),
 		AdminID:              adminID,
 		AdminName:            emailJobModel.AdminName,
 		SenderID:             senderID,

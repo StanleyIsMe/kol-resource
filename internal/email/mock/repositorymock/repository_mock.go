@@ -277,7 +277,7 @@ func (mr *MockRepositoryMockRecorder) UpdateEmailJob(ctx, param interface{}) *go
 }
 
 // UpdateEmailJobStats mocks base method.
-func (m *MockRepository) UpdateEmailJobStats(ctx context.Context, id int64, status email.EmailJobStatus) error {
+func (m *MockRepository) UpdateEmailJobStats(ctx context.Context, id int64, status email.JobStatus) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateEmailJobStats", ctx, id, status)
 	ret0, _ := ret[0].(error)

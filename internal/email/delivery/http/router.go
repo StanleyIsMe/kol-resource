@@ -1,6 +1,7 @@
 package http
 
 import (
+	"context"
 	apiCfg "kolresource/internal/api/config"
 	"kolresource/internal/email/domain"
 	"kolresource/internal/email/repository/email"
@@ -18,13 +19,14 @@ type RegisterEmailRoutesParams struct {
 	EmailRepository domain.Repository
 }
 
-func RegisterEmailRoutes(router *gin.RouterGroup, params RegisterEmailRoutesParams) {
+func RegisterEmailRoutes(ctx context.Context, router *gin.RouterGroup, params RegisterEmailRoutesParams) {
 	sendEmailRepository := email.NewRepository(params.Cfg)
+	// sendEmailRepository := email.NewMockRepository(params.Cfg)
 	emailSchedule := schedule.NewEmailSchedule(params.EmailRepository, sendEmailRepository, 0)
 	emailHandler := NewEmailHandler(params.EmailUsecase, emailSchedule)
-
+	emailSchedule.Start(ctx)
 	v1 := router.Group("/api/v1")
-	
+
 	v1.POST("/email_senders", emailHandler.CreateEmailSender)
 	v1.GET("/email_senders", emailHandler.ListEmailSenders)
 	v1.PUT("/email_senders/:id", emailHandler.UpdateEmailSender)

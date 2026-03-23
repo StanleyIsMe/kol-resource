@@ -96,7 +96,7 @@ func TestSendEmailJob_Success(t *testing.T) {
 		SuccessCount:         0,
 		SenderID:             senderID,
 		Payload:              `{"subject":"test","body":"test body","images":[]}`,
-		Status:               email.EmailJobStatusPending,
+		Status:               email.JobStatusPending,
 	}
 
 	emailSender := &entities.EmailSender{
@@ -113,7 +113,7 @@ func TestSendEmailJob_Success(t *testing.T) {
 		KolID:   kolID,
 		KolName: "Test Kol",
 		Email:   "kol@example.com",
-		Status:  email.EmailLogStatusPending,
+		Status:  email.LogStatusPending,
 	}
 
 	repoMock.EXPECT().GrabEmailJob(gomock.Any()).Return([]*entities.EmailJob{emailJob}, nil)
@@ -134,10 +134,10 @@ func TestSendEmailJob_Success(t *testing.T) {
 		SuccessCount:         0,
 		SenderID:             senderID,
 		Payload:              `{"subject":"test","body":"test body","images":[]}`,
-		Status:               email.EmailJobStatusPending,
+		Status:               email.JobStatusPending,
 	}, nil)
 
-	repoMock.EXPECT().UpdateEmailJobStats(gomock.Any(), jobID, email.EmailJobStatusProcessing).Return(nil)
+	repoMock.EXPECT().UpdateEmailJobStats(gomock.Any(), jobID, email.JobStatusProcessing).Return(nil)
 	repoMock.EXPECT().GrabPendingEmailLogByJobID(gomock.Any(), jobID).Return(emailLog, nil)
 	repoMock.EXPECT().CountPendingEmailLogsByJobID(gomock.Any(), jobID).Return(int64(1), nil)
 
@@ -153,7 +153,7 @@ func TestSendEmailJob_Success(t *testing.T) {
 		SenderPwd:   "sender-key",
 	}).Return(nil)
 
-	successStatus := email.EmailLogStatusSuccess
+	successStatus := email.LogStatusSuccess
 	repoMock.EXPECT().UpdateEmailLog(gomock.Any(), domain.UpdateEmailLogParam{
 		ID:     logID,
 		Status: &successStatus,
@@ -162,7 +162,7 @@ func TestSendEmailJob_Success(t *testing.T) {
 
 	repoMock.EXPECT().UpdateEmailJob(gomock.Any(), domain.UpdateEmailJobParam{
 		JobID:                jobID,
-		Status:               email.EmailJobStatusSuccess.ToPointer(),
+		Status:               email.JobStatusSuccess.ToPointer(),
 		IncreaseSuccessCount: 1,
 	}).Return(nil)
 
@@ -179,7 +179,7 @@ func TestSendEmailJob_Success(t *testing.T) {
 		SuccessCount:         1,
 		SenderID:             senderID,
 		Payload:              `{"subject":"test","body":"test body","images":[]}`,
-		Status:               email.EmailJobStatusProcessing,
+		Status:               email.JobStatusProcessing,
 	}, nil)
 
 	repoMock.EXPECT().GrabPendingEmailLogByJobID(gomock.Any(), jobID).Return(nil, commonErrors.ErrDataNotFound)
@@ -246,7 +246,7 @@ func TestSendEmailJob_GetSenderError(t *testing.T) {
 	emailJob := &entities.EmailJob{
 		ID:       1,
 		SenderID: senderID,
-		Status:   email.EmailJobStatusPending,
+		Status:   email.JobStatusPending,
 	}
 
 	repoMock.EXPECT().GrabEmailJob(gomock.Any()).Return([]*entities.EmailJob{emailJob}, nil)
@@ -273,7 +273,7 @@ func TestSendEmailJob_RateLimitExceeded(t *testing.T) {
 	emailJob := &entities.EmailJob{
 		ID:       1,
 		SenderID: senderID,
-		Status:   email.EmailJobStatusPending,
+		Status:   email.JobStatusPending,
 	}
 
 	emailSender := &entities.EmailSender{
@@ -309,7 +309,7 @@ func TestSendEmailJob_CountSentError(t *testing.T) {
 	emailJob := &entities.EmailJob{
 		ID:       1,
 		SenderID: senderID,
-		Status:   email.EmailJobStatusPending,
+		Status:   email.JobStatusPending,
 	}
 
 	emailSender := &entities.EmailSender{
@@ -351,7 +351,7 @@ func TestExecuteJob_FullSuccess(t *testing.T) {
 		SuccessCount:         0,
 		SenderID:             senderID,
 		Payload:              `{"subject":"test","body":"body","images":[]}`,
-		Status:               email.EmailJobStatusPending,
+		Status:               email.JobStatusPending,
 	}
 
 	emailSender := &entities.EmailSender{
@@ -374,10 +374,10 @@ func TestExecuteJob_FullSuccess(t *testing.T) {
 		SuccessCount:         0,
 		SenderID:             senderID,
 		Payload:              `{"subject":"test","body":"body","images":[]}`,
-		Status:               email.EmailJobStatusPending,
+		Status:               email.JobStatusPending,
 	}, nil)
 
-	repoMock.EXPECT().UpdateEmailJobStats(gomock.Any(), jobID, email.EmailJobStatusProcessing).Return(nil)
+	repoMock.EXPECT().UpdateEmailJobStats(gomock.Any(), jobID, email.JobStatusProcessing).Return(nil)
 
 	repoMock.EXPECT().GrabPendingEmailLogByJobID(gomock.Any(), jobID).Return(&entities.EmailLog{
 		ID:      logID,
@@ -385,7 +385,7 @@ func TestExecuteJob_FullSuccess(t *testing.T) {
 		KolID:   kolID,
 		KolName: "Test Kol",
 		Email:   "kol@example.com",
-		Status:  email.EmailLogStatusPending,
+		Status:  email.LogStatusPending,
 	}, nil)
 
 	repoMock.EXPECT().CountPendingEmailLogsByJobID(gomock.Any(), jobID).Return(int64(1), nil)
@@ -402,7 +402,7 @@ func TestExecuteJob_FullSuccess(t *testing.T) {
 		SenderPwd:   "sender-key",
 	}).Return(nil)
 
-	successStatus := email.EmailLogStatusSuccess
+	successStatus := email.LogStatusSuccess
 	repoMock.EXPECT().UpdateEmailLog(gomock.Any(), domain.UpdateEmailLogParam{
 		ID:     logID,
 		Status: &successStatus,
@@ -411,7 +411,7 @@ func TestExecuteJob_FullSuccess(t *testing.T) {
 
 	repoMock.EXPECT().UpdateEmailJob(gomock.Any(), domain.UpdateEmailJobParam{
 		JobID:                jobID,
-		Status:               email.EmailJobStatusSuccess.ToPointer(),
+		Status:               email.JobStatusSuccess.ToPointer(),
 		IncreaseSuccessCount: 1,
 	}).Return(nil)
 
@@ -442,7 +442,7 @@ func TestExecuteJob_SendEmailFails(t *testing.T) {
 		SuccessCount:         0,
 		SenderID:             senderID,
 		Payload:              `{"subject":"test","body":"body","images":[]}`,
-		Status:               email.EmailJobStatusPending,
+		Status:               email.JobStatusPending,
 	}
 
 	emailSender := &entities.EmailSender{
@@ -465,10 +465,10 @@ func TestExecuteJob_SendEmailFails(t *testing.T) {
 		SuccessCount:         0,
 		SenderID:             senderID,
 		Payload:              `{"subject":"test","body":"body","images":[]}`,
-		Status:               email.EmailJobStatusPending,
+		Status:               email.JobStatusPending,
 	}, nil)
 
-	repoMock.EXPECT().UpdateEmailJobStats(gomock.Any(), jobID, email.EmailJobStatusProcessing).Return(nil)
+	repoMock.EXPECT().UpdateEmailJobStats(gomock.Any(), jobID, email.JobStatusProcessing).Return(nil)
 
 	repoMock.EXPECT().GrabPendingEmailLogByJobID(gomock.Any(), jobID).Return(&entities.EmailLog{
 		ID:      logID,
@@ -476,7 +476,7 @@ func TestExecuteJob_SendEmailFails(t *testing.T) {
 		KolID:   kolID,
 		KolName: "Test Kol",
 		Email:   "kol@example.com",
-		Status:  email.EmailLogStatusPending,
+		Status:  email.LogStatusPending,
 	}, nil)
 
 	repoMock.EXPECT().CountPendingEmailLogsByJobID(gomock.Any(), jobID).Return(int64(1), nil)
@@ -494,7 +494,7 @@ func TestExecuteJob_SendEmailFails(t *testing.T) {
 		SenderPwd:   "sender-key",
 	}).Return(sendErr)
 
-	failedStatus := email.EmailLogStatusFailed
+	failedStatus := email.LogStatusFailed
 	repoMock.EXPECT().UpdateEmailLog(gomock.Any(), domain.UpdateEmailLogParam{
 		ID:     logID,
 		Status: &failedStatus,
@@ -503,7 +503,7 @@ func TestExecuteJob_SendEmailFails(t *testing.T) {
 
 	repoMock.EXPECT().UpdateEmailJob(gomock.Any(), domain.UpdateEmailJobParam{
 		JobID:  jobID,
-		Status: email.EmailJobStatusFailed.ToPointer(),
+		Status: email.JobStatusFailed.ToPointer(),
 	}).Return(nil)
 
 	s := NewEmailSchedule(repoMock, emailRepoMock, 1*time.Minute)
@@ -528,7 +528,7 @@ func TestExecuteJob_GetEmailJobByIDForUpdateError(t *testing.T) {
 	emailJob := &entities.EmailJob{
 		ID:       jobID,
 		SenderID: senderID,
-		Status:   email.EmailJobStatusPending,
+		Status:   email.JobStatusPending,
 	}
 
 	emailSender := &entities.EmailSender{
@@ -569,7 +569,7 @@ func TestExecuteJob_GrabPendingEmailLogError(t *testing.T) {
 	emailJob := &entities.EmailJob{
 		ID:       jobID,
 		SenderID: senderID,
-		Status:   email.EmailJobStatusPending,
+		Status:   email.JobStatusPending,
 	}
 
 	emailSender := &entities.EmailSender{
@@ -590,10 +590,10 @@ func TestExecuteJob_GrabPendingEmailLogError(t *testing.T) {
 		ID:       jobID,
 		SenderID: senderID,
 		Payload:  `{"subject":"test","body":"body","images":[]}`,
-		Status:   email.EmailJobStatusPending,
+		Status:   email.JobStatusPending,
 	}, nil)
 
-	repoMock.EXPECT().UpdateEmailJobStats(gomock.Any(), jobID, email.EmailJobStatusProcessing).Return(nil)
+	repoMock.EXPECT().UpdateEmailJobStats(gomock.Any(), jobID, email.JobStatusProcessing).Return(nil)
 	repoMock.EXPECT().GrabPendingEmailLogByJobID(gomock.Any(), jobID).Return(nil, errors.New("grab log error"))
 
 	s := NewEmailSchedule(repoMock, emailRepoMock, 1*time.Minute)
@@ -621,7 +621,7 @@ func TestExecuteJob_CountPendingError(t *testing.T) {
 		ID:       jobID,
 		SenderID: senderID,
 		Payload:  `{"subject":"test","body":"body","images":[]}`,
-		Status:   email.EmailJobStatusProcessing,
+		Status:   email.JobStatusProcessing,
 	}
 
 	emailSender := &entities.EmailSender{
@@ -642,7 +642,7 @@ func TestExecuteJob_CountPendingError(t *testing.T) {
 		ID:       jobID,
 		SenderID: senderID,
 		Payload:  `{"subject":"test","body":"body","images":[]}`,
-		Status:   email.EmailJobStatusProcessing,
+		Status:   email.JobStatusProcessing,
 	}, nil)
 
 	repoMock.EXPECT().GrabPendingEmailLogByJobID(gomock.Any(), jobID).Return(&entities.EmailLog{
@@ -651,7 +651,7 @@ func TestExecuteJob_CountPendingError(t *testing.T) {
 		KolID:   kolID,
 		KolName: "Test Kol",
 		Email:   "kol@example.com",
-		Status:  email.EmailLogStatusPending,
+		Status:  email.LogStatusPending,
 	}, nil)
 
 	repoMock.EXPECT().CountPendingEmailLogsByJobID(gomock.Any(), jobID).Return(int64(0), errors.New("count error"))
@@ -683,7 +683,7 @@ func TestExecuteJob_UpdateEmailLogError(t *testing.T) {
 		SuccessCount:         0,
 		SenderID:             senderID,
 		Payload:              `{"subject":"test","body":"body","images":[]}`,
-		Status:               email.EmailJobStatusPending,
+		Status:               email.JobStatusPending,
 	}
 
 	emailSender := &entities.EmailSender{
@@ -706,10 +706,10 @@ func TestExecuteJob_UpdateEmailLogError(t *testing.T) {
 		SuccessCount:         0,
 		SenderID:             senderID,
 		Payload:              `{"subject":"test","body":"body","images":[]}`,
-		Status:               email.EmailJobStatusPending,
+		Status:               email.JobStatusPending,
 	}, nil)
 
-	repoMock.EXPECT().UpdateEmailJobStats(gomock.Any(), jobID, email.EmailJobStatusProcessing).Return(nil)
+	repoMock.EXPECT().UpdateEmailJobStats(gomock.Any(), jobID, email.JobStatusProcessing).Return(nil)
 
 	repoMock.EXPECT().GrabPendingEmailLogByJobID(gomock.Any(), jobID).Return(&entities.EmailLog{
 		ID:      logID,
@@ -717,14 +717,14 @@ func TestExecuteJob_UpdateEmailLogError(t *testing.T) {
 		KolID:   kolID,
 		KolName: "Test Kol",
 		Email:   "kol@example.com",
-		Status:  email.EmailLogStatusPending,
+		Status:  email.LogStatusPending,
 	}, nil)
 
 	repoMock.EXPECT().CountPendingEmailLogsByJobID(gomock.Any(), jobID).Return(int64(1), nil)
 
 	emailRepoMock.EXPECT().SendEmail(gomock.Any(), gomock.Any()).Return(nil)
 
-	successStatus := email.EmailLogStatusSuccess
+	successStatus := email.LogStatusSuccess
 	repoMock.EXPECT().UpdateEmailLog(gomock.Any(), domain.UpdateEmailLogParam{
 		ID:     logID,
 		Status: &successStatus,
@@ -758,7 +758,7 @@ func TestExecuteJob_UpdateEmailJobError(t *testing.T) {
 		SuccessCount:         0,
 		SenderID:             senderID,
 		Payload:              `{"subject":"test","body":"body","images":[]}`,
-		Status:               email.EmailJobStatusPending,
+		Status:               email.JobStatusPending,
 	}
 
 	emailSender := &entities.EmailSender{
@@ -781,10 +781,10 @@ func TestExecuteJob_UpdateEmailJobError(t *testing.T) {
 		SuccessCount:         0,
 		SenderID:             senderID,
 		Payload:              `{"subject":"test","body":"body","images":[]}`,
-		Status:               email.EmailJobStatusPending,
+		Status:               email.JobStatusPending,
 	}, nil)
 
-	repoMock.EXPECT().UpdateEmailJobStats(gomock.Any(), jobID, email.EmailJobStatusProcessing).Return(nil)
+	repoMock.EXPECT().UpdateEmailJobStats(gomock.Any(), jobID, email.JobStatusProcessing).Return(nil)
 
 	repoMock.EXPECT().GrabPendingEmailLogByJobID(gomock.Any(), jobID).Return(&entities.EmailLog{
 		ID:      logID,
@@ -792,14 +792,14 @@ func TestExecuteJob_UpdateEmailJobError(t *testing.T) {
 		KolID:   kolID,
 		KolName: "Test Kol",
 		Email:   "kol@example.com",
-		Status:  email.EmailLogStatusPending,
+		Status:  email.LogStatusPending,
 	}, nil)
 
 	repoMock.EXPECT().CountPendingEmailLogsByJobID(gomock.Any(), jobID).Return(int64(1), nil)
 
 	emailRepoMock.EXPECT().SendEmail(gomock.Any(), gomock.Any()).Return(nil)
 
-	successStatus := email.EmailLogStatusSuccess
+	successStatus := email.LogStatusSuccess
 	repoMock.EXPECT().UpdateEmailLog(gomock.Any(), domain.UpdateEmailLogParam{
 		ID:     logID,
 		Status: &successStatus,
@@ -833,7 +833,7 @@ func TestExecuteJob_InvalidPayload(t *testing.T) {
 		ID:       jobID,
 		SenderID: senderID,
 		Payload:  `{invalid json`,
-		Status:   email.EmailJobStatusPending,
+		Status:   email.JobStatusPending,
 	}
 
 	emailSender := &entities.EmailSender{
@@ -854,10 +854,10 @@ func TestExecuteJob_InvalidPayload(t *testing.T) {
 		ID:       jobID,
 		SenderID: senderID,
 		Payload:  `{invalid json`,
-		Status:   email.EmailJobStatusPending,
+		Status:   email.JobStatusPending,
 	}, nil)
 
-	repoMock.EXPECT().UpdateEmailJobStats(gomock.Any(), jobID, email.EmailJobStatusProcessing).Return(nil)
+	repoMock.EXPECT().UpdateEmailJobStats(gomock.Any(), jobID, email.JobStatusProcessing).Return(nil)
 
 	repoMock.EXPECT().GrabPendingEmailLogByJobID(gomock.Any(), jobID).Return(&entities.EmailLog{
 		ID:      logID,
@@ -865,7 +865,7 @@ func TestExecuteJob_InvalidPayload(t *testing.T) {
 		KolID:   kolID,
 		KolName: "Test Kol",
 		Email:   "kol@example.com",
-		Status:  email.EmailLogStatusPending,
+		Status:  email.LogStatusPending,
 	}, nil)
 
 	repoMock.EXPECT().CountPendingEmailLogsByJobID(gomock.Any(), jobID).Return(int64(1), nil)
@@ -892,7 +892,7 @@ func TestExecuteJob_AlreadyCompleted(t *testing.T) {
 	emailJob := &entities.EmailJob{
 		ID:       jobID,
 		SenderID: senderID,
-		Status:   email.EmailJobStatusSuccess,
+		Status:   email.JobStatusSuccess,
 	}
 
 	emailSender := &entities.EmailSender{
@@ -912,7 +912,7 @@ func TestExecuteJob_AlreadyCompleted(t *testing.T) {
 	repoMock.EXPECT().GetEmailJobByIDForUpdate(gomock.Any(), jobID).Return(&entities.EmailJob{
 		ID:       jobID,
 		SenderID: senderID,
-		Status:   email.EmailJobStatusSuccess,
+		Status:   email.JobStatusSuccess,
 	}, nil)
 
 	s := NewEmailSchedule(repoMock, emailRepoMock, 1*time.Minute)

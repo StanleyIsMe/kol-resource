@@ -21,18 +21,18 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func TestEmailJobStatus_CanCancel(t *testing.T) {
+func TestJobStatus_CanCancel(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
 		name   string
-		status EmailJobStatus
+		status JobStatus
 		want   bool
 	}{
-		{name: "pending can cancel", status: EmailJobStatusPending, want: true},
-		{name: "processing can cancel", status: EmailJobStatusProcessing, want: true},
-		{name: "success cannot cancel", status: EmailJobStatusSuccess, want: false},
-		{name: "canceled cannot cancel", status: EmailJobStatusCanceled, want: false},
+		{name: "pending can cancel", status: JobStatusPending, want: true},
+		{name: "processing can cancel", status: JobStatusProcessing, want: true},
+		{name: "success cannot cancel", status: JobStatusSuccess, want: false},
+		{name: "canceled cannot cancel", status: JobStatusCanceled, want: false},
 	}
 
 	for _, tt := range tests {
@@ -40,23 +40,23 @@ func TestEmailJobStatus_CanCancel(t *testing.T) {
 			t.Parallel()
 
 			if got := tt.status.CanCancel(); got != tt.want {
-				t.Errorf("EmailJobStatus(%q).CanCancel() = %v, want %v", tt.status, got, tt.want)
+				t.Errorf("JobStatus(%q).CanCancel() = %v, want %v", tt.status, got, tt.want)
 			}
 		})
 	}
 }
 
-func TestEmailJobStatus_CanStart(t *testing.T) {
+func TestJobStatus_CanStart(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
 		name   string
-		status EmailJobStatus
+		status JobStatus
 		want   bool
 	}{
-		{name: "canceled can start", status: EmailJobStatusCanceled, want: true},
-		{name: "pending cannot start", status: EmailJobStatusPending, want: false},
-		{name: "success cannot start", status: EmailJobStatusSuccess, want: false},
+		{name: "canceled can start", status: JobStatusCanceled, want: true},
+		{name: "pending cannot start", status: JobStatusPending, want: false},
+		{name: "success cannot start", status: JobStatusSuccess, want: false},
 	}
 
 	for _, tt := range tests {
@@ -64,16 +64,16 @@ func TestEmailJobStatus_CanStart(t *testing.T) {
 			t.Parallel()
 
 			if got := tt.status.CanStart(); got != tt.want {
-				t.Errorf("EmailJobStatus(%q).CanStart() = %v, want %v", tt.status, got, tt.want)
+				t.Errorf("JobStatus(%q).CanStart() = %v, want %v", tt.status, got, tt.want)
 			}
 		})
 	}
 }
 
-func TestEmailJobStatus_ToPointer(t *testing.T) {
+func TestJobStatus_ToPointer(t *testing.T) {
 	t.Parallel()
 
-	status := EmailJobStatusPending
+	status := JobStatusPending
 	ptr := status.ToPointer()
 
 	if ptr == nil {
@@ -85,10 +85,10 @@ func TestEmailJobStatus_ToPointer(t *testing.T) {
 	}
 }
 
-func TestEmailLogStatus_ToPointer(t *testing.T) {
+func TestLogStatus_ToPointer(t *testing.T) {
 	t.Parallel()
 
-	status := EmailLogStatusPending
+	status := LogStatusPending
 	ptr := status.ToPointer()
 
 	if ptr == nil {

@@ -629,7 +629,7 @@ func TestEmailUseCaseImpl_ListEmailJobs(t *testing.T) {
 						ProductID:            uuid.MustParse("2193487b-f1a2-7a72-8ae4-197b84dc52d6"),
 						ProductName:          "Test Product",
 						Memo:                 "test memo",
-						Status:               email.EmailJobStatusPending,
+						Status:               email.JobStatusPending,
 						CreatedAt:            fixedTime,
 						UpdatedAt:            fixedTime,
 						LastExecuteAt:        fixedTime,
@@ -657,7 +657,7 @@ func TestEmailUseCaseImpl_ListEmailJobs(t *testing.T) {
 						ProductID:            uuid.MustParse("2193487b-f1a2-7a72-8ae4-197b84dc52d6"),
 						ProductName:          "Test Product",
 						Memo:                 "test memo",
-						Status:               email.EmailJobStatusPending,
+						Status:               email.JobStatusPending,
 						CreatedAt:            fixedTime,
 						UpdatedAt:            fixedTime,
 						LastExecuteAt:        fixedTime,
@@ -745,7 +745,7 @@ func TestEmailUseCaseImpl_GetEmailJob(t *testing.T) {
 				ProductID:            uuid.MustParse("2193487b-f1a2-7a72-8ae4-197b84dc52d6"),
 				ProductName:          "Test Product",
 				Memo:                 "test memo",
-				Status:               email.EmailJobStatusPending,
+				Status:               email.JobStatusPending,
 				CreatedAt:            fixedTime,
 				UpdatedAt:            fixedTime,
 				LastExecuteAt:        fixedTime,
@@ -766,7 +766,7 @@ func TestEmailUseCaseImpl_GetEmailJob(t *testing.T) {
 					ProductID:            uuid.MustParse("2193487b-f1a2-7a72-8ae4-197b84dc52d6"),
 					ProductName:          "Test Product",
 					Memo:                 "test memo",
-					Status:               email.EmailJobStatusPending,
+					Status:               email.JobStatusPending,
 					CreatedAt:            fixedTime,
 					UpdatedAt:            fixedTime,
 					LastExecuteAt:        fixedTime,
@@ -859,9 +859,9 @@ func TestEmailUseCaseImpl_ListEmailLogs(t *testing.T) {
 					Reply:    false,
 					KolID:    uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6"),
 					KolName:  "Test Kol",
-					Status:   email.EmailLogStatusPending,
+					Status:   email.LogStatusPending,
 					Memo:     "test memo",
-					SendedAt: fixedTime,
+					SendedAt: &fixedTime,
 				},
 			},
 			getMocks: func(ctrl *gomock.Controller) (domain.Repository, kolUsecase.KolUseCase) {
@@ -877,9 +877,9 @@ func TestEmailUseCaseImpl_ListEmailLogs(t *testing.T) {
 						Reply:    false,
 						KolID:    uuid.MustParse("0193487b-f1a2-7a72-8ae4-197b84dc52d6"),
 						KolName:  "Test Kol",
-						Status:   email.EmailLogStatusPending,
+						Status:   email.LogStatusPending,
 						Memo:     "test memo",
-						SendedAt: fixedTime,
+						SendedAt: &fixedTime,
 					},
 				}, nil)
 
@@ -953,7 +953,7 @@ func TestEmailUseCaseImpl_CancelEmailJob(t *testing.T) {
 
 				repoMock.EXPECT().GetEmailJobByID(gomock.Any(), int64(1)).Return(&entities.EmailJob{
 					ID:     1,
-					Status: email.EmailJobStatusPending,
+					Status: email.JobStatusPending,
 				}, nil)
 
 				repoMock.EXPECT().WithTx(gomock.Any(), gomock.Any()).DoAndReturn(
@@ -962,7 +962,7 @@ func TestEmailUseCaseImpl_CancelEmailJob(t *testing.T) {
 					},
 				)
 
-				repoMock.EXPECT().UpdateEmailJobStats(gomock.Any(), int64(1), email.EmailJobStatusCanceled).Return(nil)
+				repoMock.EXPECT().UpdateEmailJobStats(gomock.Any(), int64(1), email.JobStatusCanceled).Return(nil)
 
 				return repoMock, kolMock
 			},
@@ -995,7 +995,7 @@ func TestEmailUseCaseImpl_CancelEmailJob(t *testing.T) {
 
 				repoMock.EXPECT().GetEmailJobByID(gomock.Any(), int64(1)).Return(&entities.EmailJob{
 					ID:     1,
-					Status: email.EmailJobStatusSuccess,
+					Status: email.JobStatusSuccess,
 				}, nil)
 
 				return repoMock, kolMock
@@ -1059,7 +1059,7 @@ func TestEmailUseCaseImpl_StartEmailJob(t *testing.T) {
 
 				repoMock.EXPECT().GetEmailJobByID(gomock.Any(), int64(1)).Return(&entities.EmailJob{
 					ID:     1,
-					Status: email.EmailJobStatusCanceled,
+					Status: email.JobStatusCanceled,
 				}, nil)
 
 				repoMock.EXPECT().WithTx(gomock.Any(), gomock.Any()).DoAndReturn(
@@ -1068,7 +1068,7 @@ func TestEmailUseCaseImpl_StartEmailJob(t *testing.T) {
 					},
 				)
 
-				repoMock.EXPECT().UpdateEmailJobStats(gomock.Any(), int64(1), email.EmailJobStatusPending).Return(nil)
+				repoMock.EXPECT().UpdateEmailJobStats(gomock.Any(), int64(1), email.JobStatusPending).Return(nil)
 
 				return repoMock, kolMock
 			},
@@ -1101,7 +1101,7 @@ func TestEmailUseCaseImpl_StartEmailJob(t *testing.T) {
 
 				repoMock.EXPECT().GetEmailJobByID(gomock.Any(), int64(1)).Return(&entities.EmailJob{
 					ID:     1,
-					Status: email.EmailJobStatusPending,
+					Status: email.JobStatusPending,
 				}, nil)
 
 				return repoMock, kolMock
