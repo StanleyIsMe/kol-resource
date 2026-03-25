@@ -7,9 +7,9 @@ on:
       - "main"
 
 env:
-  GOLANG_VERSION: "1.24.11"
-  LINTER_VERSION: "v2.1.5"
-  TRIVY_VERSION: "v0.57.1"
+  GOLANG_VERSION: "1.25.8"
+  LINTER_VERSION: "v2.11.4"
+  TRIVY_VERSION: "v0.68.2"
 
 jobs:
   lint:
