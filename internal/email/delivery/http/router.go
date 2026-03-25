@@ -20,8 +20,8 @@ type RegisterEmailRoutesParams struct {
 }
 
 func RegisterEmailRoutes(ctx context.Context, router *gin.RouterGroup, params RegisterEmailRoutesParams) {
-	sendEmailRepository := email.NewRepository(params.Cfg)
-	// sendEmailRepository := email.NewMockRepository(params.Cfg)
+	// sendEmailRepository := email.NewRepository(params.Cfg)
+	sendEmailRepository := email.NewMockRepository(params.Cfg)
 	emailSchedule := schedule.NewEmailSchedule(params.EmailRepository, sendEmailRepository, 0)
 	emailHandler := NewEmailHandler(params.EmailUsecase, emailSchedule)
 	emailSchedule.Start(ctx)

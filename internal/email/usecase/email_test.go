@@ -401,6 +401,7 @@ func TestEmailUseCaseImpl_SendEmail(t *testing.T) {
 	productID := uuid.MustParse("1193487b-f1a2-7a72-8ae4-197b84dc52d6")
 	adminID := uuid.MustParse("2193487b-f1a2-7a72-8ae4-197b84dc52d6")
 	kolID := uuid.MustParse("3193487b-f1a2-7a72-8ae4-197b84dc52d6")
+	kolID2 := uuid.MustParse("4193487b-f1a2-7a72-8ae4-197b84dc52d6")
 
 	tests := []struct {
 		name          string
@@ -445,7 +446,7 @@ func TestEmailUseCaseImpl_SendEmail(t *testing.T) {
 					ID: 1,
 				}, nil)
 
-				repoMock.EXPECT().BatchCreateEmailLogs(gomock.Any(), gomock.Any()).Return(nil)
+				repoMock.EXPECT().BatchCreateEmailLogs(gomock.Any(), gomock.Any()).Return(1, nil)
 
 				return repoMock, kolMock
 			},
@@ -453,6 +454,231 @@ func TestEmailUseCaseImpl_SendEmail(t *testing.T) {
 				Subject:          "Test Subject",
 				EmailContent:     "Test Content",
 				KolIDs:           []uuid.UUID{kolID},
+				ProductID:        productID,
+				UpdatedAdminID:   adminID,
+				UpdatedAdminName: "test-admin",
+				SenderID:         senderID,
+			},
+		},
+		{
+			name:    "all_logs_skipped_by_upsert_conflict",
+			wantErr: false,
+			getMocks: func(ctrl *gomock.Controller) (domain.Repository, kolUsecase.KolUseCase) {
+				repoMock := repositorymock.NewMockRepository(ctrl)
+				kolMock := usecasemock.NewMockKolUseCase(ctrl)
+
+				repoMock.EXPECT().GetEmailSenderByID(gomock.Any(), senderID).Return(&entities.EmailSender{
+					ID:    senderID,
+					Name:  "Test Sender",
+					Email: "sender@example.com",
+				}, nil)
+
+				kolMock.EXPECT().GetProductByID(gomock.Any(), productID).Return(&kolUsecase.Product{
+					ID:   productID,
+					Name: "Test Product",
+				}, nil)
+
+				kolMock.EXPECT().ListKolEmailsByIDs(gomock.Any(), []uuid.UUID{kolID}).Return([]*kolUsecase.KolEmail{
+					{
+						ID:    kolID,
+						Name:  "Test Kol",
+						Email: "kol@example.com",
+					},
+				}, nil)
+
+				repoMock.EXPECT().WithTx(gomock.Any(), gomock.Any()).DoAndReturn(
+					func(ctx context.Context, fn func(ctx context.Context) error) error {
+						return fn(ctx)
+					},
+				)
+
+				repoMock.EXPECT().CreateEmailJob(gomock.Any(), gomock.Any()).Return(&entities.EmailJob{
+					ID: 1,
+				}, nil)
+
+				expectedCount := 0
+				repoMock.EXPECT().BatchCreateEmailLogs(gomock.Any(), gomock.Any()).Return(0, nil)
+				repoMock.EXPECT().UpdateEmailJob(gomock.Any(), domain.UpdateEmailJobParam{
+					JobID:                int64(1),
+					ExpectedReciverCount: &expectedCount,
+				}).Return(nil)
+				repoMock.EXPECT().UpdateEmailJobStats(gomock.Any(), int64(1), email.JobStatusSuccess).Return(nil)
+
+				return repoMock, kolMock
+			},
+			args: SendEmailParam{
+				Subject:          "Test Subject",
+				EmailContent:     "Test Content",
+				KolIDs:           []uuid.UUID{kolID},
+				ProductID:        productID,
+				UpdatedAdminID:   adminID,
+				UpdatedAdminName: "test-admin",
+				SenderID:         senderID,
+			},
+		},
+		{
+			name:          "all_logs_skipped_update_expected_count_error",
+			wantErr:       true,
+			expectedError: fmt.Errorf("repo.WithTx error: %w", fmt.Errorf("repo.UpdateEmailJob error: %w", errors.New("database error"))),
+			getMocks: func(ctrl *gomock.Controller) (domain.Repository, kolUsecase.KolUseCase) {
+				repoMock := repositorymock.NewMockRepository(ctrl)
+				kolMock := usecasemock.NewMockKolUseCase(ctrl)
+
+				repoMock.EXPECT().GetEmailSenderByID(gomock.Any(), senderID).Return(&entities.EmailSender{
+					ID:    senderID,
+					Name:  "Test Sender",
+					Email: "sender@example.com",
+				}, nil)
+
+				kolMock.EXPECT().GetProductByID(gomock.Any(), productID).Return(&kolUsecase.Product{
+					ID:   productID,
+					Name: "Test Product",
+				}, nil)
+
+				kolMock.EXPECT().ListKolEmailsByIDs(gomock.Any(), []uuid.UUID{kolID}).Return([]*kolUsecase.KolEmail{
+					{
+						ID:    kolID,
+						Name:  "Test Kol",
+						Email: "kol@example.com",
+					},
+				}, nil)
+
+				repoMock.EXPECT().WithTx(gomock.Any(), gomock.Any()).DoAndReturn(
+					func(ctx context.Context, fn func(ctx context.Context) error) error {
+						return fn(ctx)
+					},
+				)
+
+				repoMock.EXPECT().CreateEmailJob(gomock.Any(), gomock.Any()).Return(&entities.EmailJob{
+					ID: 1,
+				}, nil)
+
+				repoMock.EXPECT().BatchCreateEmailLogs(gomock.Any(), gomock.Any()).Return(0, nil)
+				repoMock.EXPECT().UpdateEmailJob(gomock.Any(), gomock.Any()).Return(errors.New("database error"))
+
+				return repoMock, kolMock
+			},
+			args: SendEmailParam{
+				Subject:          "Test Subject",
+				EmailContent:     "Test Content",
+				KolIDs:           []uuid.UUID{kolID},
+				ProductID:        productID,
+				UpdatedAdminID:   adminID,
+				UpdatedAdminName: "test-admin",
+				SenderID:         senderID,
+			},
+		},
+		{
+			name:          "all_logs_skipped_update_job_status_error",
+			wantErr:       true,
+			expectedError: fmt.Errorf("repo.WithTx error: %w", fmt.Errorf("repo.UpdateEmailJobStats error: %w", errors.New("database error"))),
+			getMocks: func(ctrl *gomock.Controller) (domain.Repository, kolUsecase.KolUseCase) {
+				repoMock := repositorymock.NewMockRepository(ctrl)
+				kolMock := usecasemock.NewMockKolUseCase(ctrl)
+
+				repoMock.EXPECT().GetEmailSenderByID(gomock.Any(), senderID).Return(&entities.EmailSender{
+					ID:    senderID,
+					Name:  "Test Sender",
+					Email: "sender@example.com",
+				}, nil)
+
+				kolMock.EXPECT().GetProductByID(gomock.Any(), productID).Return(&kolUsecase.Product{
+					ID:   productID,
+					Name: "Test Product",
+				}, nil)
+
+				kolMock.EXPECT().ListKolEmailsByIDs(gomock.Any(), []uuid.UUID{kolID}).Return([]*kolUsecase.KolEmail{
+					{
+						ID:    kolID,
+						Name:  "Test Kol",
+						Email: "kol@example.com",
+					},
+				}, nil)
+
+				repoMock.EXPECT().WithTx(gomock.Any(), gomock.Any()).DoAndReturn(
+					func(ctx context.Context, fn func(ctx context.Context) error) error {
+						return fn(ctx)
+					},
+				)
+
+				repoMock.EXPECT().CreateEmailJob(gomock.Any(), gomock.Any()).Return(&entities.EmailJob{
+					ID: 1,
+				}, nil)
+
+				expectedCount := 0
+				repoMock.EXPECT().BatchCreateEmailLogs(gomock.Any(), gomock.Any()).Return(0, nil)
+				repoMock.EXPECT().UpdateEmailJob(gomock.Any(), domain.UpdateEmailJobParam{
+					JobID:                int64(1),
+					ExpectedReciverCount: &expectedCount,
+				}).Return(nil)
+				repoMock.EXPECT().UpdateEmailJobStats(gomock.Any(), int64(1), email.JobStatusSuccess).Return(errors.New("database error"))
+
+				return repoMock, kolMock
+			},
+			args: SendEmailParam{
+				Subject:          "Test Subject",
+				EmailContent:     "Test Content",
+				KolIDs:           []uuid.UUID{kolID},
+				ProductID:        productID,
+				UpdatedAdminID:   adminID,
+				UpdatedAdminName: "test-admin",
+				SenderID:         senderID,
+			},
+		},
+		{
+			name:    "partial_logs_skipped_by_upsert_conflict",
+			wantErr: false,
+			getMocks: func(ctrl *gomock.Controller) (domain.Repository, kolUsecase.KolUseCase) {
+				repoMock := repositorymock.NewMockRepository(ctrl)
+				kolMock := usecasemock.NewMockKolUseCase(ctrl)
+
+				repoMock.EXPECT().GetEmailSenderByID(gomock.Any(), senderID).Return(&entities.EmailSender{
+					ID:    senderID,
+					Name:  "Test Sender",
+					Email: "sender@example.com",
+				}, nil)
+
+				kolMock.EXPECT().GetProductByID(gomock.Any(), productID).Return(&kolUsecase.Product{
+					ID:   productID,
+					Name: "Test Product",
+				}, nil)
+
+				kolMock.EXPECT().ListKolEmailsByIDs(gomock.Any(), []uuid.UUID{kolID, kolID2}).Return([]*kolUsecase.KolEmail{
+					{
+						ID:    kolID,
+						Name:  "Test Kol",
+						Email: "kol@example.com",
+					},
+					{
+						ID:    kolID2,
+						Name:  "Test Kol 2",
+						Email: "kol2@example.com",
+					},
+				}, nil)
+
+				repoMock.EXPECT().WithTx(gomock.Any(), gomock.Any()).DoAndReturn(
+					func(ctx context.Context, fn func(ctx context.Context) error) error {
+						return fn(ctx)
+					},
+				)
+
+				repoMock.EXPECT().CreateEmailJob(gomock.Any(), gomock.Any()).Return(&entities.EmailJob{
+					ID: 1,
+				}, nil)
+
+				expectedCount := 1
+				repoMock.EXPECT().BatchCreateEmailLogs(gomock.Any(), gomock.Any()).Return(1, nil)
+				repoMock.EXPECT().UpdateEmailJob(gomock.Any(), domain.UpdateEmailJobParam{
+					JobID:                int64(1),
+					ExpectedReciverCount: &expectedCount,
+				}).Return(nil)
+
+				return repoMock, kolMock
+			},
+			args: SendEmailParam{
+				Subject:          "Test Subject",
+				EmailContent:     "Test Content",
+				KolIDs:           []uuid.UUID{kolID, kolID2},
 				ProductID:        productID,
 				UpdatedAdminID:   adminID,
 				UpdatedAdminName: "test-admin",

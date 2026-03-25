@@ -27,12 +27,12 @@ type Repository interface {
 	GrabEmailJob(ctx context.Context) ([]*entities.EmailJob, error)
 	ListEmailJobs(ctx context.Context, params *ListEmailJobsParams) ([]*entities.EmailJob, int64, error)
 
-	BatchCreateEmailLogs(ctx context.Context, logs []*entities.EmailLog) error
+	BatchCreateEmailLogs(ctx context.Context, logs []*entities.EmailLog) (int, error)
 	UpdateEmailLog(ctx context.Context, param UpdateEmailLogParam) error
 	GetEmailLog(ctx context.Context, id int64) (*entities.EmailLog, error)
 	ListEmailLogs(ctx context.Context, params *ListEmailLogsParams) ([]*entities.EmailLog, error)
 	GrabPendingEmailLogByJobID(ctx context.Context, jobID int64) (*entities.EmailLog, error)
-	CountPendingEmailLogsByJobID(ctx context.Context, jobID int64) (int64, error)
+	CountEmailLogsByJobIDAndStatus(ctx context.Context, jobID int64, status email.LogStatus) (int64, error)
 	CountSentEmailsLast24Hours(ctx context.Context, senderID uuid.UUID) (int64, error)
 }
 
@@ -71,6 +71,7 @@ type UpdateEmailJobParam struct {
 	JobID                int64
 	Status               *email.JobStatus
 	IncreaseSuccessCount int
+	ExpectedReciverCount *int
 }
 
 type UpdateEmailLogParam struct {

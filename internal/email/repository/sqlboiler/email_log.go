@@ -18,8 +18,9 @@ import (
 	"github.com/google/uuid"
 )
 
-func (r *EmailRepository) BatchCreateEmailLogs(ctx context.Context, logs []*entities.EmailLog) error {
+func (r *EmailRepository) BatchCreateEmailLogs(ctx context.Context, logs []*entities.EmailLog) (int, error) {
 	tx := r.getTx(ctx)
+	insertedCount := 0
 
 	// due to the sqlboiler was not friendly for batch insert, we need to insert one by one
 	// TODO: https://github.com/tiendc/sqlboiler-extensions
@@ -40,11 +41,15 @@ func (r *EmailRepository) BatchCreateEmailLogs(ctx context.Context, logs []*enti
 		conflictColumns := []string{model.EmailLogColumns.ProductID, model.EmailLogColumns.Email}
 		err := emailLogModel.Upsert(ctx, tx, false, conflictColumns, boil.None(), boil.Infer())
 		if err != nil {
-			return commonErrors.InsertRecordError{Err: err}
+			return insertedCount, commonErrors.InsertRecordError{Err: err}
+		}
+
+		if emailLogModel.ID > 0 {
+			insertedCount++
 		}
 	}
 
-	return nil
+	return insertedCount, nil
 }
 
 func (r *EmailRepository) UpdateEmailLog(ctx context.Context, param domain.UpdateEmailLogParam) error {
@@ -110,9 +115,9 @@ func (r *EmailRepository) GrabPendingEmailLogByJobID(ctx context.Context, jobID 
 	return r.newEmailLogFromModel(emailLogModel)
 }
 
-func (r *EmailRepository) CountPendingEmailLogsByJobID(ctx context.Context, jobID int64) (int64, error) {
+func (r *EmailRepository) CountEmailLogsByJobIDAndStatus(ctx context.Context, jobID int64, status email.LogStatus) (int64, error) {
 	count, err := model.EmailLogs(
-		qm.Where("job_id = ? AND status = ?", jobID, model.EmailLogStatusPending),
+		qm.Where("job_id = ? AND status = ?", jobID, status),
 	).Count(ctx, r.getTx(ctx))
 	if err != nil {
 		return 0, commonErrors.QueryRecordError{Err: err}

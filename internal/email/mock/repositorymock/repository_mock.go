@@ -54,11 +54,12 @@ func (mr *MockRepositoryMockRecorder) AllEmailSenders(ctx interface{}) *gomock.C
 }
 
 // BatchCreateEmailLogs mocks base method.
-func (m *MockRepository) BatchCreateEmailLogs(ctx context.Context, logs []*entities.EmailLog) error {
+func (m *MockRepository) BatchCreateEmailLogs(ctx context.Context, logs []*entities.EmailLog) (int, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "BatchCreateEmailLogs", ctx, logs)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(int)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // BatchCreateEmailLogs indicates an expected call of BatchCreateEmailLogs.
@@ -67,19 +68,19 @@ func (mr *MockRepositoryMockRecorder) BatchCreateEmailLogs(ctx, logs interface{}
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BatchCreateEmailLogs", reflect.TypeOf((*MockRepository)(nil).BatchCreateEmailLogs), ctx, logs)
 }
 
-// CountPendingEmailLogsByJobID mocks base method.
-func (m *MockRepository) CountPendingEmailLogsByJobID(ctx context.Context, jobID int64) (int64, error) {
+// CountEmailLogsByJobIDAndStatus mocks base method.
+func (m *MockRepository) CountEmailLogsByJobIDAndStatus(ctx context.Context, jobID int64, status email.LogStatus) (int64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CountPendingEmailLogsByJobID", ctx, jobID)
+	ret := m.ctrl.Call(m, "CountEmailLogsByJobIDAndStatus", ctx, jobID, status)
 	ret0, _ := ret[0].(int64)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// CountPendingEmailLogsByJobID indicates an expected call of CountPendingEmailLogsByJobID.
-func (mr *MockRepositoryMockRecorder) CountPendingEmailLogsByJobID(ctx, jobID interface{}) *gomock.Call {
+// CountEmailLogsByJobIDAndStatus indicates an expected call of CountEmailLogsByJobIDAndStatus.
+func (mr *MockRepositoryMockRecorder) CountEmailLogsByJobIDAndStatus(ctx, jobID, status interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountPendingEmailLogsByJobID", reflect.TypeOf((*MockRepository)(nil).CountPendingEmailLogsByJobID), ctx, jobID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountEmailLogsByJobIDAndStatus", reflect.TypeOf((*MockRepository)(nil).CountEmailLogsByJobIDAndStatus), ctx, jobID, status)
 }
 
 // CountSentEmailsLast24Hours mocks base method.

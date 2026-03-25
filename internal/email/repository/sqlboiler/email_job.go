@@ -89,6 +89,12 @@ func (r *EmailRepository) UpdateEmailJob(ctx context.Context, param domain.Updat
 		argIndex++
 	}
 
+	if param.ExpectedReciverCount != nil {
+		setParts = append(setParts, fmt.Sprintf("expected_reciver_count = $%d", argIndex))
+		args = append(args, *param.ExpectedReciverCount)
+		argIndex++
+	}
+
 	setParts = append(setParts, fmt.Sprintf("last_execute_at = $%d", argIndex))
 	args = append(args, time.Now().UTC())
 	argIndex++

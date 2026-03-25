@@ -139,7 +139,7 @@ func TestSendEmailJob_Success(t *testing.T) {
 
 	repoMock.EXPECT().UpdateEmailJobStats(gomock.Any(), jobID, email.JobStatusProcessing).Return(nil)
 	repoMock.EXPECT().GrabPendingEmailLogByJobID(gomock.Any(), jobID).Return(emailLog, nil)
-	repoMock.EXPECT().CountPendingEmailLogsByJobID(gomock.Any(), jobID).Return(int64(1), nil)
+	repoMock.EXPECT().CountEmailLogsByJobIDAndStatus(gomock.Any(), jobID, email.LogStatusPending).Return(int64(1), nil)
 
 	emailRepoMock.EXPECT().SendEmail(gomock.Any(), domain.SendEmailParams{
 		Subject: "test",
@@ -160,13 +160,15 @@ func TestSendEmailJob_Success(t *testing.T) {
 		Memo:   "",
 	}).Return(nil)
 
+	repoMock.EXPECT().CountEmailLogsByJobIDAndStatus(gomock.Any(), jobID, email.LogStatusFailed).Return(int64(0), nil)
+
 	repoMock.EXPECT().UpdateEmailJob(gomock.Any(), domain.UpdateEmailJobParam{
 		JobID:                jobID,
 		Status:               email.JobStatusSuccess.ToPointer(),
 		IncreaseSuccessCount: 1,
 	}).Return(nil)
 
-	// Second iteration: no more pending logs, exits early via ErrDataNotFound.
+	// Second iteration: no more pending logs, finalizeJob is called.
 	repoMock.EXPECT().WithTx(gomock.Any(), gomock.Any()).After(firstWithTx).DoAndReturn(
 		func(ctx context.Context, fn func(ctx context.Context) error) error {
 			return fn(ctx)
@@ -183,6 +185,12 @@ func TestSendEmailJob_Success(t *testing.T) {
 	}, nil)
 
 	repoMock.EXPECT().GrabPendingEmailLogByJobID(gomock.Any(), jobID).Return(nil, commonErrors.ErrDataNotFound)
+	repoMock.EXPECT().CountEmailLogsByJobIDAndStatus(gomock.Any(), jobID, email.LogStatusSuccess).Return(int64(1), nil)
+	repoMock.EXPECT().CountEmailLogsByJobIDAndStatus(gomock.Any(), jobID, email.LogStatusFailed).Return(int64(0), nil)
+	repoMock.EXPECT().UpdateEmailJob(gomock.Any(), domain.UpdateEmailJobParam{
+		JobID:  jobID,
+		Status: email.JobStatusSuccess.ToPointer(),
+	}).Return(nil)
 
 	s := NewEmailSchedule(repoMock, emailRepoMock, 1*time.Minute)
 
@@ -388,7 +396,7 @@ func TestExecuteJob_FullSuccess(t *testing.T) {
 		Status:  email.LogStatusPending,
 	}, nil)
 
-	repoMock.EXPECT().CountPendingEmailLogsByJobID(gomock.Any(), jobID).Return(int64(1), nil)
+	repoMock.EXPECT().CountEmailLogsByJobIDAndStatus(gomock.Any(), jobID, email.LogStatusPending).Return(int64(1), nil)
 
 	emailRepoMock.EXPECT().SendEmail(gomock.Any(), domain.SendEmailParams{
 		Subject: "test",
@@ -408,6 +416,8 @@ func TestExecuteJob_FullSuccess(t *testing.T) {
 		Status: &successStatus,
 		Memo:   "",
 	}).Return(nil)
+
+	repoMock.EXPECT().CountEmailLogsByJobIDAndStatus(gomock.Any(), jobID, email.LogStatusFailed).Return(int64(0), nil)
 
 	repoMock.EXPECT().UpdateEmailJob(gomock.Any(), domain.UpdateEmailJobParam{
 		JobID:                jobID,
@@ -479,7 +489,7 @@ func TestExecuteJob_SendEmailFails(t *testing.T) {
 		Status:  email.LogStatusPending,
 	}, nil)
 
-	repoMock.EXPECT().CountPendingEmailLogsByJobID(gomock.Any(), jobID).Return(int64(1), nil)
+	repoMock.EXPECT().CountEmailLogsByJobIDAndStatus(gomock.Any(), jobID, email.LogStatusPending).Return(int64(1), nil)
 
 	sendErr := errors.New("SMTP connection failed")
 	emailRepoMock.EXPECT().SendEmail(gomock.Any(), domain.SendEmailParams{
@@ -500,6 +510,8 @@ func TestExecuteJob_SendEmailFails(t *testing.T) {
 		Status: &failedStatus,
 		Memo:   "failed to send email: SMTP connection failed",
 	}).Return(nil)
+
+	repoMock.EXPECT().CountEmailLogsByJobIDAndStatus(gomock.Any(), jobID, email.LogStatusFailed).Return(int64(1), nil)
 
 	repoMock.EXPECT().UpdateEmailJob(gomock.Any(), domain.UpdateEmailJobParam{
 		JobID:  jobID,
@@ -654,7 +666,7 @@ func TestExecuteJob_CountPendingError(t *testing.T) {
 		Status:  email.LogStatusPending,
 	}, nil)
 
-	repoMock.EXPECT().CountPendingEmailLogsByJobID(gomock.Any(), jobID).Return(int64(0), errors.New("count error"))
+	repoMock.EXPECT().CountEmailLogsByJobIDAndStatus(gomock.Any(), jobID, email.LogStatusPending).Return(int64(0), errors.New("count error"))
 
 	s := NewEmailSchedule(repoMock, emailRepoMock, 1*time.Minute)
 
@@ -720,7 +732,7 @@ func TestExecuteJob_UpdateEmailLogError(t *testing.T) {
 		Status:  email.LogStatusPending,
 	}, nil)
 
-	repoMock.EXPECT().CountPendingEmailLogsByJobID(gomock.Any(), jobID).Return(int64(1), nil)
+	repoMock.EXPECT().CountEmailLogsByJobIDAndStatus(gomock.Any(), jobID, email.LogStatusPending).Return(int64(1), nil)
 
 	emailRepoMock.EXPECT().SendEmail(gomock.Any(), gomock.Any()).Return(nil)
 
@@ -795,7 +807,7 @@ func TestExecuteJob_UpdateEmailJobError(t *testing.T) {
 		Status:  email.LogStatusPending,
 	}, nil)
 
-	repoMock.EXPECT().CountPendingEmailLogsByJobID(gomock.Any(), jobID).Return(int64(1), nil)
+	repoMock.EXPECT().CountEmailLogsByJobIDAndStatus(gomock.Any(), jobID, email.LogStatusPending).Return(int64(1), nil)
 
 	emailRepoMock.EXPECT().SendEmail(gomock.Any(), gomock.Any()).Return(nil)
 
@@ -805,6 +817,8 @@ func TestExecuteJob_UpdateEmailJobError(t *testing.T) {
 		Status: &successStatus,
 		Memo:   "",
 	}).Return(nil)
+
+	repoMock.EXPECT().CountEmailLogsByJobIDAndStatus(gomock.Any(), jobID, email.LogStatusFailed).Return(int64(0), nil)
 
 	repoMock.EXPECT().UpdateEmailJob(gomock.Any(), gomock.Any()).Return(errors.New("update job error"))
 
@@ -868,7 +882,7 @@ func TestExecuteJob_InvalidPayload(t *testing.T) {
 		Status:  email.LogStatusPending,
 	}, nil)
 
-	repoMock.EXPECT().CountPendingEmailLogsByJobID(gomock.Any(), jobID).Return(int64(1), nil)
+	repoMock.EXPECT().CountEmailLogsByJobIDAndStatus(gomock.Any(), jobID, email.LogStatusPending).Return(int64(1), nil)
 
 	s := NewEmailSchedule(repoMock, emailRepoMock, 1*time.Minute)
 

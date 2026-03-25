@@ -199,9 +199,24 @@ func (uc *EmailUseCaseImpl) SendEmail(ctx context.Context, param SendEmailParam)
 			})
 		}
 
-		err = uc.repo.BatchCreateEmailLogs(ctx, emailLogs)
+		insertedCount, err := uc.repo.BatchCreateEmailLogs(ctx, emailLogs)
 		if err != nil {
 			return fmt.Errorf("repo.BatchCreateEmailLogs error: %w", err)
+		}
+
+		if insertedCount < len(emailLogs) {
+			if err := uc.repo.UpdateEmailJob(ctx, domain.UpdateEmailJobParam{
+				JobID:                emailJob.ID,
+				ExpectedReciverCount: &insertedCount,
+			}); err != nil {
+				return fmt.Errorf("repo.UpdateEmailJob error: %w", err)
+			}
+		}
+
+		if insertedCount == 0 {
+			if err := uc.repo.UpdateEmailJobStats(ctx, emailJob.ID, email.JobStatusSuccess); err != nil {
+				return fmt.Errorf("repo.UpdateEmailJobStats error: %w", err)
+			}
 		}
 
 		return nil
