@@ -9,7 +9,6 @@ on:
 env:
   GOLANG_VERSION: "1.25.8"
   LINTER_VERSION: "v2.11.4"
-  TRIVY_VERSION: "v0.68.2"
 
 jobs:
   lint:
@@ -47,11 +46,13 @@ jobs:
         with:
           go-version: ${{ env.GOLANG_VERSION }}
           cache: true
-      - name: Install trivy
-        run: |
-          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b $HOME/.local/bin ${{ env.TRIVY_VERSION }}
       - name: Run security scan with trivy
-        run: make trivy-scan
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          exit-code: '1'
+          severity: 'CRITICAL'
       - name: Install govuln
         run: |
           go install golang.org/x/vuln/cmd/govulncheck@latest
