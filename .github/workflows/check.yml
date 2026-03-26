@@ -1,14 +1,20 @@
 name: "check"
 
-on: 
+on:
   pull_request:
   push:
     branches:
       - "main"
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   GOLANG_VERSION: "1.25.8"
-  LINTER_VERSION: "v2.11.4"
 
 jobs:
   lint:
@@ -22,19 +28,10 @@ jobs:
         with:
           go-version: ${{ env.GOLANG_VERSION }}
           cache: true
-      - name: Cache golangci-lint
-        id: golangci-lint
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/golangci-lint
-          key: ${{ runner.os }}-golangci-lint
-      - name: Install golangci-lint
-        run: |
-          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $HOME/.local/bin ${{ env.LINTER_VERSION }}
       - name: Lint all modules with golangci-lint
-        run: |
-          PATH=$PATH:$HOME/.local/bin make lint
+        uses: golangci/golangci-lint-action@1e7e51e771db61008b38414a730f564565cf7c20 # v9.2.0
+        with:
+          version: v2.11.4
   sec-scan:
     timeout-minutes: 10
     runs-on: ubuntu-latest
@@ -53,12 +50,19 @@ jobs:
           scan-ref: '.'
           exit-code: '1'
           severity: 'CRITICAL'
-      - name: Install govuln
+      - name: Run security scan with govulncheck
         run: |
-          go install golang.org/x/vuln/cmd/govulncheck@latest
-      - name: Run security scan with govuln
-        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@v1.1.4
           make vuln-scan
+  dependency-review:
+    if: github.event_name == 'pull_request'
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Dependency review
+        uses: actions/dependency-review-action@2031cfc080254a8a887f58cffee85186f0e49e48 # v4.9.0
   leak-test:
     timeout-minutes: 15
     runs-on: ubuntu-latest
@@ -73,3 +77,21 @@ jobs:
       - name: Test with leak detector
         run: |
           make test-leak
+  docker-build:
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Build Docker image
+        run: |
+          docker buildx build \
+            -f Dockerfile \
+            --platform linux/amd64 \
+            --build-arg GO_VERSION=${{ env.GOLANG_VERSION }} \
+            --build-arg GO_GOOS=linux \
+            --build-arg GO_GOARCH=amd64 \
+            --build-arg GLOBAL_VAR_PKG=server \
+            --build-arg LAST_MAIN_COMMIT_HASH=${{ github.sha }} \
+            --build-arg LAST_MAIN_COMMIT_TIME=${{ github.event.head_commit.timestamp }} \
+            ./
