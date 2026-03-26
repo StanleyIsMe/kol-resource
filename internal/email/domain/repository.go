@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 )
 
+//go:generate mockgen -source=./repository.go -destination=../mock/repositorymock/repository_mock.go -package=repositorymock
 //nolint:interfacebloat
 type Repository interface {
 	WithTx(ctx context.Context, fn func(ctx context.Context) error) error
@@ -19,19 +20,19 @@ type Repository interface {
 	AllEmailSenders(ctx context.Context) ([]*entities.EmailSender, error)
 
 	CreateEmailJob(ctx context.Context, job *entities.EmailJob) (*entities.EmailJob, error)
-	UpdateEmailJobStats(ctx context.Context, id int64, status email.EmailJobStatus) error
+	UpdateEmailJobStats(ctx context.Context, id int64, status email.JobStatus) error
 	UpdateEmailJob(ctx context.Context, param UpdateEmailJobParam) error
 	GetEmailJobByID(ctx context.Context, id int64) (*entities.EmailJob, error)
 	GetEmailJobByIDForUpdate(ctx context.Context, id int64) (*entities.EmailJob, error)
 	GrabEmailJob(ctx context.Context) ([]*entities.EmailJob, error)
 	ListEmailJobs(ctx context.Context, params *ListEmailJobsParams) ([]*entities.EmailJob, int64, error)
 
-	BatchCreateEmailLogs(ctx context.Context, logs []*entities.EmailLog) error
+	BatchCreateEmailLogs(ctx context.Context, logs []*entities.EmailLog) (int, error)
 	UpdateEmailLog(ctx context.Context, param UpdateEmailLogParam) error
 	GetEmailLog(ctx context.Context, id int64) (*entities.EmailLog, error)
 	ListEmailLogs(ctx context.Context, params *ListEmailLogsParams) ([]*entities.EmailLog, error)
 	GrabPendingEmailLogByJobID(ctx context.Context, jobID int64) (*entities.EmailLog, error)
-	CountPendingEmailLogsByJobID(ctx context.Context, jobID int64) (int64, error)
+	CountEmailLogsByJobIDAndStatus(ctx context.Context, jobID int64, status email.LogStatus) (int64, error)
 	CountSentEmailsLast24Hours(ctx context.Context, senderID uuid.UUID) (int64, error)
 }
 
@@ -41,10 +42,10 @@ type EmailRepository interface {
 
 type UpdateEmailSenderParam struct {
 	ID             uuid.UUID `json:"id"`
-	Name           *string    `json:"name"`
-	Email          *string    `json:"email"`
-	Key            *string    `json:"key"`
-	RateLimit      *int       `json:"rate_limit"`
+	Name           *string   `json:"name"`
+	Email          *string   `json:"email"`
+	Key            *string   `json:"key"`
+	RateLimit      *int      `json:"rate_limit"`
 	UpdatedAdminID uuid.UUID `json:"updated_admin_id"`
 }
 
@@ -54,27 +55,28 @@ type GrabEmailJobParams struct {
 
 type ListEmailLogsParams struct {
 	JobID  int64
-	Status *email.EmailLogStatus
+	Status *email.LogStatus
 }
 
 type ListEmailJobsParams struct {
 	SenderEmail *string
 	SenderName  *string
 	ProductName *string
-	Status      *email.EmailJobStatus
+	Status      *email.JobStatus
 	Page        int
 	Size        int
 }
 
 type UpdateEmailJobParam struct {
 	JobID                int64
-	Status               *email.EmailJobStatus
+	Status               *email.JobStatus
 	IncreaseSuccessCount int
+	ExpectedReciverCount *int
 }
 
 type UpdateEmailLogParam struct {
 	ID     int64
-	Status *email.EmailLogStatus
+	Status *email.LogStatus
 	Memo   string
 	Reply  *bool
 }

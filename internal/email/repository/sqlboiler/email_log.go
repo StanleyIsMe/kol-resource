@@ -12,13 +12,15 @@ import (
 	"kolresource/internal/email/domain/entities"
 	"time"
 
+	"github.com/aarondl/null/v8"
 	"github.com/aarondl/sqlboiler/v4/boil"
 	"github.com/aarondl/sqlboiler/v4/queries/qm"
 	"github.com/google/uuid"
 )
 
-func (r *EmailRepository) BatchCreateEmailLogs(ctx context.Context, logs []*entities.EmailLog) error {
+func (r *EmailRepository) BatchCreateEmailLogs(ctx context.Context, logs []*entities.EmailLog) (int, error) {
 	tx := r.getTx(ctx)
+	insertedCount := 0
 
 	// due to the sqlboiler was not friendly for batch insert, we need to insert one by one
 	// TODO: https://github.com/tiendc/sqlboiler-extensions
@@ -36,17 +38,18 @@ func (r *EmailRepository) BatchCreateEmailLogs(ctx context.Context, logs []*enti
 			Momo:      emailLog.Memo,
 		}
 
-		err := emailLogModel.Insert(ctx, tx, boil.Infer())
+		conflictColumns := []string{model.EmailLogColumns.ProductID, model.EmailLogColumns.Email}
+		err := emailLogModel.Upsert(ctx, tx, false, conflictColumns, boil.None(), boil.Infer())
 		if err != nil {
-			if commonErrors.IsUniqueViolationError(err) {
-				continue
-			}
+			return insertedCount, commonErrors.InsertRecordError{Err: err}
+		}
 
-			return commonErrors.InsertRecordError{Err: err}
+		if emailLogModel.ID > 0 {
+			insertedCount++
 		}
 	}
 
-	return nil
+	return insertedCount, nil
 }
 
 func (r *EmailRepository) UpdateEmailLog(ctx context.Context, param domain.UpdateEmailLogParam) error {
@@ -55,7 +58,7 @@ func (r *EmailRepository) UpdateEmailLog(ctx context.Context, param domain.Updat
 
 	if param.Status != nil {
 		cols[model.EmailLogColumns.Status] = model.EmailLogStatus(*param.Status)
-		cols[model.EmailLogColumns.SendedAt] = time.Now()
+		cols[model.EmailLogColumns.SendedAt] = time.Now().UTC()
 	}
 
 	if param.Memo != "" {
@@ -111,10 +114,10 @@ func (r *EmailRepository) GrabPendingEmailLogByJobID(ctx context.Context, jobID 
 
 	return r.newEmailLogFromModel(emailLogModel)
 }
-		
-func (r *EmailRepository) CountPendingEmailLogsByJobID(ctx context.Context, jobID int64) (int64, error) {
+
+func (r *EmailRepository) CountEmailLogsByJobIDAndStatus(ctx context.Context, jobID int64, status email.LogStatus) (int64, error) {
 	count, err := model.EmailLogs(
-		qm.Where("job_id = ? AND status = ?", jobID, model.EmailLogStatusPending),
+		qm.Where("job_id = ? AND status = ?", jobID, status),
 	).Count(ctx, r.getTx(ctx))
 	if err != nil {
 		return 0, commonErrors.QueryRecordError{Err: err}
@@ -164,6 +167,14 @@ func (r *EmailRepository) CountSentEmailsLast24Hours(ctx context.Context, sender
 	return count, nil
 }
 
+func nullTimeToPtr(nt null.Time) *time.Time {
+	if !nt.Valid {
+		return nil
+	}
+
+	return &nt.Time
+}
+
 func (r *EmailRepository) newEmailLogFromModel(emailLogModel *model.EmailLog) (*entities.EmailLog, error) {
 	kolID, err := uuid.Parse(emailLogModel.KolID)
 	if err != nil {
@@ -186,7 +197,7 @@ func (r *EmailRepository) newEmailLogFromModel(emailLogModel *model.EmailLog) (*
 		KolID:     kolID,
 		KolName:   emailLogModel.KolName,
 		Email:     emailLogModel.Email,
-		Status:    email.EmailLogStatus(emailLogModel.Status),
+		Status:    email.LogStatus(emailLogModel.Status),
 		ProductID: productID,
 		SenderID:  senderID,
 		MessageID: emailLogModel.MessageID,
@@ -194,6 +205,6 @@ func (r *EmailRepository) newEmailLogFromModel(emailLogModel *model.EmailLog) (*
 		Memo:      emailLogModel.Momo,
 		CreatedAt: emailLogModel.CreatedAt,
 		UpdatedAt: emailLogModel.UpdatedAt,
-		SendedAt:  emailLogModel.SendedAt.Time,
+		SendedAt:  nullTimeToPtr(emailLogModel.SendedAt),
 	}, nil
 }

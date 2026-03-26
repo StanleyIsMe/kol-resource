@@ -13,7 +13,7 @@ SHELL = /bin/bash
 test: test-race test-leak ## launch all tests
 
 test-race: ## launch all tests with race detection
-	go test ./... -cover -race
+	go test ./... -race
 
 test-leak: ## launch all tests with leak detection (if possible)
 	go test ./... -leak
@@ -109,7 +109,7 @@ build: ## build docker image
 	-f Dockerfile \
 	-t $(PROJECT_NAME) \
 	--platform linux/amd64 \
-	--build-arg GO_VERSION=1.24.2 \
+	--build-arg GO_VERSION=1.25.8 \
 	--build-arg GO_GOOS=linux \
 	--build-arg GO_GOARCH=amd64 \
 	--build-arg GLOBAL_VAR_PKG=server \

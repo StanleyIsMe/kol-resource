@@ -18,6 +18,7 @@ import (
 const (
 	defaultEmailScheduleInterval = 1 * time.Minute
 	defaultEmailCountPerMinute   = 2
+	rateLimitSafetyMargin        = 0.9
 )
 
 type EmailSchedule struct {
@@ -43,7 +44,7 @@ func (s *EmailSchedule) Start(ctx context.Context) {
 			select {
 			case <-ticker.C:
 				jobCtx, jobCancel := context.WithTimeout(ctx, s.interval)
-				jobCtx = zerolog.Ctx(context.Background()).With().Fields(map[string]any{
+				jobCtx = zerolog.Ctx(ctx).With().Fields(map[string]any{
 					"schedule_id": uuid.New().String(),
 				}).Logger().WithContext(jobCtx)
 
@@ -88,7 +89,7 @@ func (s *EmailSchedule) SendEmailJob(ctx context.Context) error {
 			continue
 		}
 
-		remainBudget := int64(float64(emailSender.RateLimit)*0.9) - sentEmailsCount
+		remainBudget := int64(float64(emailSender.RateLimit)*rateLimitSafetyMargin) - sentEmailsCount
 
 		for i := 1; i <= defaultEmailCountPerMinute; i++ {
 			if remainBudget <= 0 {
@@ -118,6 +119,35 @@ func (s *EmailSchedule) SendEmailJob(ctx context.Context) error {
 	return nil
 }
 
+func (s *EmailSchedule) finalizeJob(ctx context.Context, job *entities.EmailJob) error {
+	successCount, err := s.repo.CountEmailLogsByJobIDAndStatus(ctx, job.ID, email.LogStatusSuccess)
+	if err != nil {
+		return fmt.Errorf("repo.CountEmailLogsByJobIDAndStatus error: %w", err)
+	}
+
+	failedCount, err := s.repo.CountEmailLogsByJobIDAndStatus(ctx, job.ID, email.LogStatusFailed)
+	if err != nil {
+		return fmt.Errorf("repo.CountEmailLogsByJobIDAndStatus error: %w", err)
+	}
+
+	var status email.JobStatus
+	switch {
+	case successCount == 0 && failedCount == 0:
+		status = email.JobStatusSuccess
+	case successCount == 0:
+		status = email.JobStatusFailed
+	case failedCount > 0:
+		status = email.JobStatusPartiallySuccess
+	default:
+		status = email.JobStatusSuccess
+	}
+
+	return s.repo.UpdateEmailJob(ctx, domain.UpdateEmailJobParam{
+		JobID:  job.ID,
+		Status: status.ToPointer(),
+	})
+}
+
 func (s *EmailSchedule) executeJob(
 	ctx context.Context,
 	emailJob *entities.EmailJob,
@@ -130,33 +160,32 @@ func (s *EmailSchedule) executeJob(
 		}
 
 		// skip if email job status is not pending or processing
-		if emailJobEntity.Status != email.EmailJobStatusPending && emailJobEntity.Status != email.EmailJobStatusProcessing {
+		if emailJobEntity.Status != email.JobStatusPending && emailJobEntity.Status != email.JobStatusProcessing {
 			return nil
 		}
 
-		if emailJobEntity.Status == email.EmailJobStatusPending {
-			if err := s.repo.UpdateEmailJobStats(ctx, emailJobEntity.ID, email.EmailJobStatusProcessing); err != nil {
+		if emailJobEntity.Status == email.JobStatusPending {
+			if err := s.repo.UpdateEmailJobStats(ctx, emailJobEntity.ID, email.JobStatusProcessing); err != nil {
 				return fmt.Errorf("repo.UpdateEmailJobStats error: %w", err)
 			}
 		}
 
-		// get email receiver from email log
 		emailLog, err := s.repo.GrabPendingEmailLogByJobID(ctx, emailJobEntity.ID)
 		if err != nil {
 			if errors.Is(err, commonErrors.ErrDataNotFound) {
-				return nil
+				return s.finalizeJob(ctx, emailJobEntity)
 			}
 
 			return fmt.Errorf("repo.GrabPendingEmailLogByJobID error: %w", err)
 		}
 
-		pendingEmailCount, err := s.repo.CountPendingEmailLogsByJobID(ctx, emailJobEntity.ID)
+		pendingEmailCount, err := s.repo.CountEmailLogsByJobIDAndStatus(ctx, emailJobEntity.ID, email.LogStatusPending)
 		if err != nil {
 			return fmt.Errorf("repo.CountPendingEmailLogsByJobID error: %w", err)
 		}
 
 		memo := ""
-		emailLogStatus := email.EmailLogStatusSuccess
+		emailLogStatus := email.LogStatusSuccess
 
 		// send email
 		var emailPayload domain.SendEmailParams
@@ -185,7 +214,7 @@ func (s *EmailSchedule) executeJob(
 			}).Msg("emailRepo.SendEmail error")
 
 			memo = fmt.Sprintf("failed to send email: %s", err.Error())
-			emailLogStatus = email.EmailLogStatusFailed
+			emailLogStatus = email.LogStatusFailed
 		}
 
 		// update email log information
@@ -202,19 +231,24 @@ func (s *EmailSchedule) executeJob(
 			JobID: emailJobEntity.ID,
 		}
 
-		if emailLogStatus == email.EmailLogStatusSuccess {
+		if emailLogStatus == email.LogStatusSuccess {
 			updateEmailJobParam.IncreaseSuccessCount = 1
 			emailJobEntity.SuccessCount++
 		}
 
-		if pendingEmailCount -1 <= 0 {
-			updateEmailJobParam.Status = email.EmailJobStatusPartiallySuccess.ToPointer()
-			if emailJobEntity.SuccessCount >= emailJobEntity.ExpectedReciverCount {
-				updateEmailJobParam.Status = email.EmailJobStatusSuccess.ToPointer()
+		if pendingEmailCount-1 <= 0 {
+			failedEmailCount, err := s.repo.CountEmailLogsByJobIDAndStatus(ctx, emailJobEntity.ID, email.LogStatusFailed)
+			if err != nil {
+				return fmt.Errorf("repo.CountEmailLogsByJobIDAndStatus error: %w", err)
+			}
+
+			updateEmailJobParam.Status = email.JobStatusPartiallySuccess.ToPointer()
+			if emailJobEntity.SuccessCount >= emailJobEntity.ExpectedReciverCount || failedEmailCount <= 0 {
+				updateEmailJobParam.Status = email.JobStatusSuccess.ToPointer()
 			}
 
 			if emailJobEntity.SuccessCount == 0 {
-				updateEmailJobParam.Status = email.EmailJobStatusFailed.ToPointer()
+				updateEmailJobParam.Status = email.JobStatusFailed.ToPointer()
 			}
 		}
 

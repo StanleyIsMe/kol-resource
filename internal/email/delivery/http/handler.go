@@ -104,20 +104,20 @@ func (h *EmailHandler) UpdateEmailSender(c *gin.Context) {
 	var req UpdateEmailSenderRequest
 	if err := c.ShouldBindUri(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": errors.New("invalid uri param")})
-		
+
 		return
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": errors.New("invalid request")})
-		
+
 		return
 	}
 
 	ucParam, err := req.ToUsecaseParam(c)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		
+
 		return
 	}
 

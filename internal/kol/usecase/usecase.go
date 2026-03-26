@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 )
 
+//go:generate mockgen -source=./usecase.go -destination=../mock/usecasemock/usecase_mock.go -package=usecasemock
 type KolUseCase interface { //nolint:interfacebloat
 	CreateKol(ctx context.Context, param CreateKolParam) error
 	GetKolByID(ctx context.Context, kolID uuid.UUID) (*Kol, error)
